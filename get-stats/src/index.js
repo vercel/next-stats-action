@@ -8,6 +8,7 @@ const {
   cloneRepo,
   checkoutRef,
   mergeBranch,
+  getCommitId,
   linkPackages,
   getLastStable,
 } = require('./prepare/repo-setup')(actionInfo)
@@ -36,6 +37,9 @@ const { mainRepoDir, diffRepoDir } = require('./constants')
       const lastStableTag = await getLastStable(mainRepoDir)
       if (!lastStableTag) throw new Error('failed to get last stable tag')
       await checkoutRef(lastStableTag, mainRepoDir)
+      const releaseCommitId = await getCommitId(diffRepoDir)
+      /* eslint-disable-next-line */
+      actionInfo.commentEndpoint = `https://api.github.com/repos/${statsConfig.mainRepo}/commits/${releaseCommitId}/comments`
     } else if (statsConfig.autoMergeMain) {
       logger('Attempting auto merge of main branch')
       await mergeBranch(statsConfig.mainBranch, mainRepoDir, diffRepoDir)

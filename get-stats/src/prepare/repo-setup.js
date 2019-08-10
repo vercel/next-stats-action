@@ -28,6 +28,10 @@ module.exports = actionInfo => {
       }
       return lastStableTag
     },
+    async getCommitId(repoDir = '') {
+      const { stdout } = await exec(`cd ${repoDir} && git rev-parse HEAD`)
+      return stdout.trim()
+    },
     async resetToRef(ref = '', repoDir = '') {
       await exec(`cd ${repoDir} && git reset --hard ${ref}`)
     },
