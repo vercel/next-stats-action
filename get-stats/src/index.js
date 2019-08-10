@@ -56,6 +56,7 @@ const { mainRepoDir, diffRepoDir } = require('./constants')
       diffRepoPkgPaths,
     })
     await addComment(results, actionInfo)
+    logger('finished')
     process.exit(0)
   } catch (err) {
     console.error('Error occurred generating stats:')

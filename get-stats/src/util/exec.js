@@ -9,7 +9,7 @@ const env = {
   PR_STATS_COMMENT_TOKEN: '',
 }
 
-module.exports = function exec(command) {
-  logger(`exec: ${command}`)
+module.exports = function exec(command, noLog = false) {
+  if (!noLog) logger(`exec: ${command}`)
   return execP(command, { env })
 }

@@ -31,9 +31,16 @@ const StatsConfig = {
       // title of the run
       title: 'fastMode stats',
       // whether to diff the outputted files (default: onOutputChange)
-      diff: 'always' | 'onOutputChange' | false | undefined,
+      diff: 'onOutputChange' | false | undefined,
       // config files to add before running diff (if `undefined` uses `configFiles`)
       diffConfigFiles: [] | undefined,
+      // renames to apply to make file names deterministic
+      diffRenames: [
+        {
+          srcGlob: 'main-*.js',
+          dest: 'main.js'
+        }
+      ],
       // config files to add before running (removed before successive runs)
       configFiles: [
         {
@@ -41,9 +48,14 @@ const StatsConfig = {
           content: 'module.exports = { fastMode: true }'
         }
       ],
-      // an array of globs for output files to diff/track
+      // an array of file groups to diff/track
       filesToTrack: [
-        'build/pages/**/*.js'
+        {
+          name: 'Pages',
+          globs: [
+            'build/pages/**/*.js'
+          ]
+        }
       ]
     },
     { // second run's config
@@ -56,8 +68,13 @@ const StatsConfig = {
         }
       ],
       filesToTrack: [
-        'build/runtime/webpack-*.js'
-        'build/runtime/main-*.js',
+        {
+          name: 'Main Bundles',
+          globs: [
+            'build/runtime/webpack-*.js'
+            'build/runtime/main-*.js',
+          ]
+        }
       ]
     },
   ]
