@@ -1,4 +1,5 @@
 const logger = require('../util/logger')
+const releaseTypes = new Set(['release', 'published'])
 
 module.exports = function actionInfo() {
   const {
@@ -18,14 +19,13 @@ module.exports = function actionInfo() {
     gitRoot: GIT_ROOT_DIR, // used for running locally
     prRepo: GITHUB_REPOSITORY,
     prRef: GITHUB_REF,
-    isRelease: false,
+    isRelease: releaseTypes.has(GITHUB_ACTION),
   }
 
   // get comment
   if (GITHUB_EVENT_PATH) {
     const event = require(GITHUB_EVENT_PATH)
     info.actionName = event.action || info.actionName
-    const releaseTypes = new Set(['release', 'published'])
 
     if (releaseTypes.has(info.actionName)) {
       info.isRelease = true

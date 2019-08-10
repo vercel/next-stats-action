@@ -2,6 +2,7 @@ const path = require('path')
 const fs = require('fs-extra')
 const exec = require('../util/exec')
 const { remove } = require('fs-extra')
+const logger = require('../util/logger')
 
 module.exports = actionInfo => {
   return {
@@ -12,8 +13,39 @@ module.exports = actionInfo => {
     async checkoutRef(ref = '', repoDir = '') {
       await exec(`cd ${repoDir} && git fetch && git checkout ${ref}`)
     },
-    async resetToRef(ref = '', repoPath = '') {
-      await exec(`cd ${repoPath} && git reset --hard ${ref}`)
+    async getLastStable(repoDir = '') {
+      const { stdout } = await exec(`cd ${repoDir} && git tag -l`)
+      const tags = stdout.trim().split('\n')
+      let lastStableTag
+
+      for (let i = tags.length - 1; i >= 0; i--) {
+        const curTag = tags[i]
+        // stable doesn't include `-canary` or `-beta`
+        if (!curTag.includes('-')) {
+          lastStableTag = curTag
+          break
+        }
+      }
+      return lastStableTag
+    },
+    async resetToRef(ref = '', repoDir = '') {
+      await exec(`cd ${repoDir} && git reset --hard ${ref}`)
+    },
+    async mergeBranch(ref = '', origRepoDir = '', destRepoDir = '') {
+      await exec(`cd ${destRepoDir} && git remote add upstream ${origRepoDir}`)
+      await exec(`cd ${destRepoDir} && git fetch upstream`)
+
+      try {
+        await exec(`cd ${destRepoDir} && git merge upstream/${ref}`)
+        logger('Auto merge of main branch successful')
+      } catch (err) {
+        logger.error('Failed to auto merge main branch:', err)
+
+        if (err.stdout && err.stdout.includes('CONFLICT')) {
+          await exec(`cd ${destRepoDir} && git merge --abort`)
+          logger('aborted auto merge')
+        }
+      }
     },
     async linkPackages(repoDir = '') {
       await fs.remove(path.join(repoDir, 'node_modules'))

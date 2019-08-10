@@ -21,10 +21,13 @@ const StatsConfig = {
   initialBuildCommand: undefined | string,
   // the command to build the app (app source should be in `.stats-app`)
   appBuildCommand: string,
+  appStartCommand: string | undefined,
   // the main branch to compare against (what PRs will be merging into)
   mainBranch: 'canary',
   // the main repository path (relative to https://github.com/)
   mainRepo: 'zeit/next.js',
+  // whether to attempt auto merging the main branch into PR before running stats
+  autoMergeMain: boolean | undefined,
   // an array of configs for each run
   configs: [
     { // first run's config
@@ -35,7 +38,7 @@ const StatsConfig = {
       // config files to add before running diff (if `undefined` uses `configFiles`)
       diffConfigFiles: [] | undefined,
       // renames to apply to make file names deterministic
-      diffRenames: [
+      renames: [
         {
           srcGlob: 'main-*.js',
           dest: 'main.js'
@@ -56,6 +59,10 @@ const StatsConfig = {
             'build/pages/**/*.js'
           ]
         }
+      ],
+      // an array of URLs to fetch while `appStartCommand` is running
+      pagesToFetch: [
+        'https://localhost:3000/page-1'
       ]
     },
     { // second run's config

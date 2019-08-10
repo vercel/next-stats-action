@@ -7,7 +7,9 @@ const actionInfo = require('./prepare/action-info')()
 const {
   cloneRepo,
   checkoutRef,
+  mergeBranch,
   linkPackages,
+  getLastStable,
 } = require('./prepare/repo-setup')(actionInfo)
 
 const { mainRepoDir, diffRepoDir } = require('./constants')
@@ -23,11 +25,21 @@ const { mainRepoDir, diffRepoDir } = require('./constants')
       diffRepoDir,
       '.stats-app/stats-config.js'
     ))
-    logger('Got statsConfig:', statsConfig)
+    logger('Got statsConfig:', statsConfig, '\n')
 
     // clone main repository/ref
     await cloneRepo(statsConfig.mainRepo, mainRepoDir)
     await checkoutRef(statsConfig.mainBranch, mainRepoDir)
+
+    if (actionInfo.isRelease) {
+      logger('Release detected, resetting mainRepo to last stable tag')
+      const lastStableTag = await getLastStable(mainRepoDir)
+      if (!lastStableTag) throw new Error('failed to get last stable tag')
+      await checkoutRef(lastStableTag, mainRepoDir)
+    } else if (statsConfig.autoMergeMain) {
+      logger('Attempting auto merge of main branch')
+      await mergeBranch(statsConfig.mainBranch, mainRepoDir, diffRepoDir)
+    }
 
     let mainRepoPkgPaths
     let diffRepoPkgPaths
@@ -55,7 +67,7 @@ const { mainRepoDir, diffRepoDir } = require('./constants')
       mainRepoPkgPaths,
       diffRepoPkgPaths,
     })
-    await addComment(results, actionInfo)
+    await addComment(results, actionInfo, statsConfig)
     logger('finished')
     process.exit(0)
   } catch (err) {

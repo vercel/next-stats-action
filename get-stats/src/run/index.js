@@ -1,14 +1,12 @@
 const path = require('path')
 const fs = require('fs-extra')
+const glob = require('../util/glob')
 const exec = require('../util/exec')
 const logger = require('../util/logger')
 const getDirSize = require('./get-dir-size')
 const collectStats = require('./collect-stats')
 const collectDiffs = require('./collect-diffs')
 const { diffRepoDir, statsAppDir } = require('../constants')
-
-// stats that always tracked
-const defaultStats = new Set(['buildDuration', 'nodeModulesSize'])
 
 const objVal = (obj, keys = '') => {
   let curVal = obj
@@ -40,8 +38,10 @@ async function runConfigs(
 
     for (const pkgPaths of [mainRepoPkgPaths, diffRepoPkgPaths]) {
       let curStats = {
-        buildDuration: null,
-        nodeModulesSize: null,
+        General: {
+          buildDuration: null,
+          nodeModulesSize: null,
+        },
       }
 
       // remove any new files
@@ -64,19 +64,29 @@ async function runConfigs(
       await linkPkgs(statsAppDir, pkgPaths)
 
       if (!diffing) {
-        curStats.nodeModulesSize = await getDirSize(
+        curStats.General.nodeModulesSize = await getDirSize(
           path.join(statsAppDir, 'node_modules')
         )
       }
 
       const buildStart = new Date().getTime()
       await exec(`cd ${statsAppDir} && ${statsConfig.appBuildCommand}`)
-      curStats.buildDuration = new Date().getTime() - buildStart
+      curStats.General.buildDuration = new Date().getTime() - buildStart
+
+      // apply renames to get deterministic output names
+      for (const rename of config.renames) {
+        const results = await glob(rename.srcGlob, { cwd: statsAppDir })
+        if (results.length === 0 || results[0] === rename.dest) continue
+        await fs.move(
+          path.join(statsAppDir, results[0]),
+          path.join(statsAppDir, rename.dest)
+        )
+      }
 
       if (diffing) {
         curStats = true
       } else {
-        const collectedStats = await collectStats(config.filesToTrack)
+        const collectedStats = await collectStats(config, statsConfig)
         curStats = {
           ...curStats,
           ...collectedStats,
@@ -88,7 +98,7 @@ async function runConfigs(
 
         if (!diffing && config.diff !== false) {
           for (const groupKey of Object.keys(curStats)) {
-            if (defaultStats.has(groupKey)) continue
+            if (groupKey === 'General') continue
             let mainGroupTotal = 0
             let diffGroupTotal = 0
 
