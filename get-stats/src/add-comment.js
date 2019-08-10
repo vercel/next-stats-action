@@ -49,7 +49,7 @@ module.exports = async function addComment(
             if (!itemKey.endsWith('gzip')) {
               totalChange += change
             }
-            change = `${change < 0 ? '-' : '⚠️  '}${prettify(
+            change = `${change < 0 ? '-' : '⚠️ +'}${prettify(
               Math.abs(change),
               prettyType
             )}`
