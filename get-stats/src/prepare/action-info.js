@@ -12,6 +12,9 @@ module.exports = function actionInfo() {
     PR_STATS_COMMENT_TOKEN,
   } = process.env
 
+  delete process.env.GITHUB_TOKEN
+  delete process.env.PR_STATS_COMMENT_TOKEN
+
   const info = {
     actionName: GITHUB_ACTION,
     githubToken: GITHUB_TOKEN || PR_STATS_COMMENT_TOKEN,
