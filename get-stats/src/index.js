@@ -1,9 +1,10 @@
-const path = require('path')
 const exec = require('./util/exec')
 const logger = require('./util/logger')
 const runConfigs = require('./run')
 const addComment = require('./add-comment')
 const actionInfo = require('./prepare/action-info')()
+const { mainRepoDir, diffRepoDir } = require('./constants')
+const loadStatsConfig = require('./prepare/load-stats-config')
 const {
   cloneRepo,
   checkoutRef,
@@ -13,20 +14,14 @@ const {
   getLastStable,
 } = require('./prepare/repo-setup')(actionInfo)
 
-const { mainRepoDir, diffRepoDir } = require('./constants')
-
 ;(async () => {
   try {
     // clone PR/newer repository/ref first to get settings
     await cloneRepo(actionInfo.prRepo, diffRepoDir)
     await checkoutRef(actionInfo.prRef, diffRepoDir)
 
-    // load stats-config
-    const statsConfig = require(path.join(
-      diffRepoDir,
-      '.stats-app/stats-config.js'
-    ))
-    logger('Got statsConfig:', statsConfig, '\n')
+    // load stats config from allowed locations
+    const { statsConfig, statsConfigPath } = loadStatsConfig()
 
     // clone main repository/ref
     await cloneRepo(statsConfig.mainRepo, mainRepoDir)
@@ -68,6 +63,7 @@ const { mainRepoDir, diffRepoDir } = require('./constants')
     // run the configs and post the comment
     const results = await runConfigs(statsConfig.configs, {
       statsConfig,
+      statsConfigPath,
       mainRepoPkgPaths,
       diffRepoPkgPaths,
     })

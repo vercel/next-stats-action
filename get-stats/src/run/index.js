@@ -6,7 +6,7 @@ const logger = require('../util/logger')
 const getDirSize = require('./get-dir-size')
 const collectStats = require('./collect-stats')
 const collectDiffs = require('./collect-diffs')
-const { diffRepoDir, statsAppDir } = require('../constants')
+const { statsAppDir } = require('../constants')
 
 const objVal = (obj, keys = '') => {
   let curVal = obj
@@ -19,7 +19,7 @@ const objVal = (obj, keys = '') => {
 
 async function runConfigs(
   configs = [],
-  { statsConfig, mainRepoPkgPaths, diffRepoPkgPaths },
+  { statsConfig, statsConfigPath, mainRepoPkgPaths, diffRepoPkgPaths },
   diffing = false
 ) {
   const results = []
@@ -29,7 +29,7 @@ async function runConfigs(
 
     // clean statsAppDir
     await fs.remove(statsAppDir)
-    await fs.copy(path.join(diffRepoDir, '.stats-app'), statsAppDir)
+    await fs.copy(statsConfigPath, statsAppDir)
     const origFiles = new Set(await fs.readdir(statsAppDir))
 
     let mainRepoStats
@@ -119,6 +119,7 @@ async function runConfigs(
                 ],
                 {
                   statsConfig,
+                  statsConfigPath,
                   mainRepoPkgPaths,
                   diffRepoPkgPaths,
                 },
