@@ -62,7 +62,7 @@ const StatsConfig = {
       ],
       // an array of URLs to fetch while `appStartCommand` is running
       pagesToFetch: [
-        'https://localhost:3000/page-1'
+        'https://localhost:$PORT/page-1'
       ]
     },
     { // second run's config

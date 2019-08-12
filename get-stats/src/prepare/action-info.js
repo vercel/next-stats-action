@@ -19,7 +19,7 @@ module.exports = function actionInfo() {
   const info = {
     skipClone: SKIP_CLONE,
     actionName: GITHUB_ACTION,
-    githubToken: PR_STATS_COMMENT_TOKEN || GITHUB_TOKEN ,
+    githubToken: PR_STATS_COMMENT_TOKEN || GITHUB_TOKEN,
     commentEndpoint: null,
     gitRoot: GIT_ROOT_DIR || 'https://github.com/',
     prRepo: GITHUB_REPOSITORY,

@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "fs-extra": "^8.1.0",
+    "get-port": "^5.0.0",
     "glob": "^7.1.4",
     "gzip-size": "^5.1.1",
     "minimatch": "^3.0.4",

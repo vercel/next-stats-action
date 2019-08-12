@@ -1,5 +1,6 @@
 const path = require('path')
 const fs = require('fs-extra')
+const getPort = require('get-port')
 const fetch = require('node-fetch')
 const glob = require('../util/glob')
 const gzipSize = require('gzip-size')
@@ -41,11 +42,18 @@ module.exports = async function collectStats(runConfig = {}, statsConfig = {}) {
     runConfig.pagesToFetch.length > 0
   ) {
     const groupStats = {}
-    const child = spawn(statsConfig.appStartCommand, { cwd: statsAppDir })
+    const port = await getPort()
+    const child = spawn(statsConfig.appStartCommand, {
+      cwd: statsAppDir,
+      env: {
+        PORT: port,
+      },
+    })
     // give server a second to start up
     await new Promise(resolve => setTimeout(() => resolve(), 1500))
 
-    for (const url of runConfig.pagesToFetch) {
+    for (let url of runConfig.pagesToFetch) {
+      url = url.replace('$PORT', port)
       let size = 0
       let sizeGzip = 0
       try {

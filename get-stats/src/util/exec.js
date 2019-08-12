@@ -14,23 +14,19 @@ function exec(command, noLog = false) {
   return execP(command, { env })
 }
 
-exec.spawn = function spawn(commandStr = '', opts = {}) {
-  const args = commandStr.split(' ')
-  const command = args.shift()
-
-  logger(`spawn: ${commandStr}`)
-  const child = spawnOrig(command, args, {
+exec.spawn = function spawn(command = '', opts = {}) {
+  logger(`spawn: ${command}`)
+  const child = spawnOrig('/bin/bash', ['-c', command], {
     ...opts,
-    env,
-    stdio: 'pipe',
-  })
-
-  child.stderr.on('data', chunk => {
-    logger.error(chunk.toString())
+    env: {
+      ...env,
+      ...opts.env,
+    },
+    stdio: 'inherit',
   })
 
   child.on('exit', (code, signal) => {
-    logger(`spawn exit (${code}, ${signal}): ${commandStr}`)
+    logger(`spawn exit (${code}, ${signal}): ${command}`)
   })
   return child
 }
