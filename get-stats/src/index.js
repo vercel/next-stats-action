@@ -17,27 +17,33 @@ const {
 ;(async () => {
   try {
     // clone PR/newer repository/ref first to get settings
-    await cloneRepo(actionInfo.prRepo, diffRepoDir)
-    await checkoutRef(actionInfo.prRef, diffRepoDir)
+    if (!actionInfo.skipClone) {
+      await cloneRepo(actionInfo.prRepo, diffRepoDir)
+      await checkoutRef(actionInfo.prRef, diffRepoDir)
+    }
 
     // load stats config from allowed locations
     const { statsConfig, statsConfigPath } = loadStatsConfig()
 
     // clone main repository/ref
-    await cloneRepo(statsConfig.mainRepo, mainRepoDir)
-    await checkoutRef(statsConfig.mainBranch, mainRepoDir)
+    if (!actionInfo.skipClone) {
+      await cloneRepo(statsConfig.mainRepo, mainRepoDir)
+      await checkoutRef(statsConfig.mainBranch, mainRepoDir)
+    }
 
-    if (actionInfo.isRelease) {
-      logger('Release detected, resetting mainRepo to last stable tag')
-      const lastStableTag = await getLastStable(mainRepoDir)
-      if (!lastStableTag) throw new Error('failed to get last stable tag')
-      await checkoutRef(lastStableTag, mainRepoDir)
-      const releaseCommitId = await getCommitId(diffRepoDir)
-      /* eslint-disable-next-line */
-      actionInfo.commentEndpoint = `https://api.github.com/repos/${statsConfig.mainRepo}/commits/${releaseCommitId}/comments`
-    } else if (statsConfig.autoMergeMain) {
-      logger('Attempting auto merge of main branch')
-      await mergeBranch(statsConfig.mainBranch, mainRepoDir, diffRepoDir)
+    if (!actionInfo.skipClone) {
+      if (actionInfo.isRelease) {
+        logger('Release detected, resetting mainRepo to last stable tag')
+        const lastStableTag = await getLastStable(mainRepoDir)
+        if (!lastStableTag) throw new Error('failed to get last stable tag')
+        await checkoutRef(lastStableTag, mainRepoDir)
+        const releaseCommitId = await getCommitId(diffRepoDir)
+        /* eslint-disable-next-line */
+        actionInfo.commentEndpoint = `https://api.github.com/repos/${statsConfig.mainRepo}/commits/${releaseCommitId}/comments`
+      } else if (statsConfig.autoMergeMain) {
+        logger('Attempting auto merge of main branch')
+        await mergeBranch(statsConfig.mainBranch, mainRepoDir, diffRepoDir)
+      }
     }
 
     let mainRepoPkgPaths
@@ -46,12 +52,14 @@ const {
     // run install/initialBuildCommand
     for (const dir of [mainRepoDir, diffRepoDir]) {
       logger(`Running initial build for ${dir}`)
-      let buildCommand = `cd ${dir} && yarn install --prefer-offline`
+      if (!actionInfo.skipClone) {
+        let buildCommand = `cd ${dir} && yarn install --prefer-offline`
 
-      if (statsConfig.initialBuildCommand) {
-        buildCommand += ` && ${statsConfig.initialBuildCommand}`
+        if (statsConfig.initialBuildCommand) {
+          buildCommand += ` && ${statsConfig.initialBuildCommand}`
+        }
+        await exec(buildCommand)
       }
-      await exec(buildCommand)
 
       logger(`Linking packages in ${dir}`)
       const pkgPaths = await linkPackages(dir)

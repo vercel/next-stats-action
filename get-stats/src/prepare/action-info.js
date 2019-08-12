@@ -3,6 +3,7 @@ const releaseTypes = new Set(['release', 'published'])
 
 module.exports = function actionInfo() {
   const {
+    SKIP_CLONE,
     GITHUB_REF,
     GITHUB_TOKEN,
     GIT_ROOT_DIR,
@@ -16,6 +17,7 @@ module.exports = function actionInfo() {
   delete process.env.PR_STATS_COMMENT_TOKEN
 
   const info = {
+    skipClone: SKIP_CLONE,
     actionName: GITHUB_ACTION,
     githubToken: GITHUB_TOKEN || PR_STATS_COMMENT_TOKEN,
     commentEndpoint: null,

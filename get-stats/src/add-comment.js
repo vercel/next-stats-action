@@ -45,14 +45,16 @@ module.exports = async function addComment(
             typeof diffItemVal === 'number'
           ) {
             change = Math.round((diffItemVal - mainItemVal) * 100) / 100
-
-            if (!itemKey.endsWith('gzip')) {
-              totalChange += change
+            // check if there is still a change after rounding
+            if (change !== 0) {
+              if (!itemKey.endsWith('gzip')) {
+                totalChange += change
+              }
+              change = `${change < 0 ? '-' : '⚠️ +'}${prettify(
+                Math.abs(change),
+                prettyType
+              )}`
             }
-            change = `${change < 0 ? '-' : '⚠️ +'}${prettify(
-              Math.abs(change),
-              prettyType
-            )}`
           } else {
             change = 'N/A'
           }
@@ -69,6 +71,22 @@ module.exports = async function addComment(
             : ' ⚠️ Overall increase ⚠️'
       }
 
+      if (groupKey !== 'General') {
+        let totalChangeSign = ''
+
+        if (totalChange === 0) {
+          totalChange = '✓'
+        } else {
+          totalChangeSign = totalChange < 0 ? '-' : '⚠️ +'
+        }
+        totalChange = `${totalChangeSign}${
+          typeof totalChange === 'number'
+            ? prettify(Math.abs(totalChange))
+            : totalChange
+        }`
+        groupTable += `| Overall change |  |  | ${totalChange} |\n`
+      }
+
       comment += `<details>\n`
       comment += `<summary><strong>${groupKey}</strong>${groupTotalChange}</summary>\n\n`
       comment += groupTable
@@ -77,20 +95,25 @@ module.exports = async function addComment(
 
     // add diffs
     if (result.diffs) {
-      comment += '#### Diffs\n'
+      const diffHeading = '#### Diffs\n'
+      let diffContent = diffHeading
 
       Object.keys(result.diffs).forEach(itemKey => {
         const curDiff = result.diffs[itemKey]
-        comment += `<details>\n`
-        comment += `<summary>Diff for <strong>${itemKey}</strong></summary>\n\n`
+        diffContent += `<details>\n`
+        diffContent += `<summary>Diff for <strong>${itemKey}</strong></summary>\n\n`
 
         if (curDiff.length > 36 * 1000) {
-          comment += 'Diff too large to display'
+          diffContent += 'Diff too large to display'
         } else {
-          comment += `\`\`\`diff\n${curDiff}\n\`\`\``
+          diffContent += `\`\`\`diff\n${curDiff}\n\`\`\``
         }
-        comment += `\n</details>\n`
+        diffContent += `\n</details>\n`
       })
+
+      if (diffContent !== diffHeading) {
+        comment += diffContent
+      }
     }
 
     comment += '\n'
