@@ -103,9 +103,10 @@ async function runConfigs(
             let diffGroupTotal = 0
 
             Object.keys(curStats[groupKey]).forEach(itemKey => {
-              diffGroupTotal = objVal(diffRepoStats, `${groupKey}!!${itemKey}`)
-              mainGroupTotal =
-                objVal(mainRepoStats, `${groupKey}!!${itemKey}`) || 0
+              const diffItemVal = objVal(diffRepoStats, `${groupKey}!!${itemKey}`)
+              const mainItemVal = objVal(mainRepoStats, `${groupKey}!!${itemKey}`)
+              diffGroupTotal += typeof diffItemVal === 'number' ? diffItemVal : 0
+              mainGroupTotal += typeof mainItemVal === 'number' ? mainItemVal : 0
             })
 
             if (mainGroupTotal !== diffGroupTotal) {
