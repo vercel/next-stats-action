@@ -14,7 +14,16 @@ const {
   getLastStable,
 } = require('./prepare/repo-setup')(actionInfo)
 
-;(async () => {
+const allowedActions = new Set(['synchronize', 'opened'])
+
+if (!allowedActions.has(actionInfo.actionName) && !actionInfo.isRelease) {
+  logger(
+    `Not running for ${actionInfo.actionName} event action on repo: ${actionInfo.prRepo} and ref ${actionInfo.prRef}`
+  )
+  process.exit(0)
+}
+
+(async () => {
   try {
     // clone PR/newer repository/ref first to get settings
     if (!actionInfo.skipClone) {
