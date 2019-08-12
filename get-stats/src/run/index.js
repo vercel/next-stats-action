@@ -99,17 +99,19 @@ async function runConfigs(
         if (!diffing && config.diff !== false) {
           for (const groupKey of Object.keys(curStats)) {
             if (groupKey === 'General') continue
-            let mainGroupTotal = 0
-            let diffGroupTotal = 0
+            let changeDetected = false
 
-            Object.keys(curStats[groupKey]).forEach(itemKey => {
-              const diffItemVal = objVal(diffRepoStats, `${groupKey}!!${itemKey}`)
-              const mainItemVal = objVal(mainRepoStats, `${groupKey}!!${itemKey}`)
-              diffGroupTotal += typeof diffItemVal === 'number' ? diffItemVal : 0
-              mainGroupTotal += typeof mainItemVal === 'number' ? mainItemVal : 0
+            Object.keys(curStats[groupKey]).some(itemKey => {
+              if (itemKey.endsWith('gzip')) return false
+              let diffItemVal = objVal(diffRepoStats, `${groupKey}!!${itemKey}`)
+              let mainItemVal = objVal(mainRepoStats, `${groupKey}!!${itemKey}`)
+              diffItemVal = typeof diffItemVal === 'number' ? diffItemVal : 0
+              mainItemVal = typeof mainItemVal === 'number' ? mainItemVal : 0
+              changeDetected = diffItemVal !== mainItemVal
+              return changeDetected
             })
 
-            if (mainGroupTotal !== diffGroupTotal) {
+            if (changeDetected) {
               logger('Detected change, running diff')
               diffs = await runConfigs(
                 [
