@@ -10,6 +10,7 @@ module.exports = async function collectDiffs(
   initial = false
 ) {
   if (initial) {
+    logger('Setting up directory for diffing')
     // set-up diffing directory
     await fs.remove(diffingDir)
     await fs.mkdirp(diffingDir)

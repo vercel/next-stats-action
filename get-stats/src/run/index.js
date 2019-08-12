@@ -11,7 +11,7 @@ const { statsAppDir } = require('../constants')
 const objVal = (obj, keys = '') => {
   let curVal = obj
 
-  for (const key of keys.split('.')) {
+  for (const key of keys.split('!!')) {
     curVal = curVal && typeof curVal === 'object' && curVal[key]
   }
   return curVal
@@ -132,12 +132,12 @@ async function runConfigs(
 
         if (diffing) {
           // copy new files and get diff results
-          return collectDiffs(config.filesToTrack, config.diffRenames)
+          return collectDiffs(config.filesToTrack)
         }
       } else {
         // set up diffing folder and copy initial files
         if (diffing)
-          await collectDiffs(config.filesToTrack, config.diffRenames, true)
+          await collectDiffs(config.filesToTrack, true)
         /* eslint-disable-next-line */
         mainRepoStats = curStats
       }
