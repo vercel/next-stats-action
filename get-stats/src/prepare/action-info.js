@@ -21,7 +21,7 @@ module.exports = function actionInfo() {
     actionName: GITHUB_ACTION,
     githubToken: GITHUB_TOKEN || PR_STATS_COMMENT_TOKEN,
     commentEndpoint: null,
-    gitRoot: GIT_ROOT_DIR, // used for running locally
+    gitRoot: GIT_ROOT_DIR || 'https://github.com/',
     prRepo: GITHUB_REPOSITORY,
     prRef: GITHUB_REF,
     isRelease: releaseTypes.has(GITHUB_ACTION),
