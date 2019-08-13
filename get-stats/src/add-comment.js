@@ -131,7 +131,7 @@ module.exports = async function addComment(
     }
 
     comment += `<details>\n`
-    comment += `<summary><strong>${result.title}${increaseDecreaseNote}</strong></summary>\n\n<br/>\n\n`
+    comment += `<summary><strong>${result.title}</strong>${increaseDecreaseNote}</summary>\n\n<br/>\n\n`
     comment += resultContent
     comment += '</details>\n'
 
