@@ -104,8 +104,14 @@ async function runConfigs(
             if (!changeDetected) {
               Object.keys(curStats[groupKey]).some(itemKey => {
                 if (itemKey.endsWith('gzip')) return false
-                let diffItemVal = objVal(diffRepoStats, `${groupKey}!!${itemKey}`)
-                let mainItemVal = objVal(mainRepoStats, `${groupKey}!!${itemKey}`)
+                let diffItemVal = objVal(
+                  diffRepoStats,
+                  `${groupKey}!!${itemKey}`
+                )
+                let mainItemVal = objVal(
+                  mainRepoStats,
+                  `${groupKey}!!${itemKey}`
+                )
                 diffItemVal = typeof diffItemVal === 'number' ? diffItemVal : 0
                 mainItemVal = typeof mainItemVal === 'number' ? mainItemVal : 0
                 changeDetected = diffItemVal !== mainItemVal
@@ -141,8 +147,7 @@ async function runConfigs(
         }
       } else {
         // set up diffing folder and copy initial files
-        if (diffing)
-          await collectDiffs(config.filesToTrack, true)
+        if (diffing) await collectDiffs(config.filesToTrack, true)
         /* eslint-disable-next-line */
         mainRepoStats = curStats
       }

@@ -21,8 +21,12 @@ module.exports = async function addComment(
 
   const tableHead = `|  | ${statsConfig.mainRepo} ${statsConfig.mainBranch} | ${actionInfo.prRepo} ${actionInfo.prRef} | Change |\n| - | - | - | - |\n`
 
-  for (const result of results) {
-    comment += `### ${result.title}\n\n`
+  for (let i = 0; i < results.length; i++) {
+    const result = results[i]
+    const isLastResult = i === results.length - 1
+    let resultHasIncrease = false
+    let resultHasDecrease = false
+    let resultContent = ''
 
     Object.keys(result.mainRepoStats).forEach(groupKey => {
       const mainRepoGroup = result.mainRepoStats[groupKey]
@@ -65,10 +69,13 @@ module.exports = async function addComment(
       let groupTotalChange = ''
 
       if (groupKey !== 'General' && totalChange !== 0) {
-        groupTotalChange =
-          totalChange < 0
-            ? ' ✅ Overall decrease ✅'
-            : ' ⚠️ Overall increase ⚠️'
+        if (totalChange < 0) {
+          resultHasDecrease = true
+          groupTotalChange = ' ✅ Overall decrease ✅'
+        } else {
+          resultHasIncrease = true
+          groupTotalChange = ' ⚠️ Overall increase ⚠️'
+        }
       }
 
       if (groupKey !== 'General') {
@@ -87,10 +94,10 @@ module.exports = async function addComment(
         groupTable += `| Overall change |  |  | ${totalChange} |\n`
       }
 
-      comment += `<details>\n`
-      comment += `<summary><strong>${groupKey}</strong>${groupTotalChange}</summary>\n\n`
-      comment += groupTable
-      comment += `\n</details>\n\n`
+      resultContent += `<details>\n`
+      resultContent += `<summary><strong>${groupKey}</strong>${groupTotalChange}</summary>\n\n`
+      resultContent += groupTable
+      resultContent += `\n</details>\n\n`
     })
 
     // add diffs
@@ -112,11 +119,25 @@ module.exports = async function addComment(
       })
 
       if (diffContent !== diffHeading) {
-        comment += diffContent
+        resultContent += diffContent
       }
     }
+    let increaseDecreaseNote
 
-    comment += '\n'
+    if (resultHasIncrease) {
+      increaseDecreaseNote = ' (⚠️ Increase detected ⚠️)'
+    } else if (resultHasDecrease) {
+      increaseDecreaseNote = ' (✅ Decrease detected ✅)'
+    }
+
+    comment += `<details>\n`
+    comment += `<summary><strong>${result.title}${increaseDecreaseNote}</strong></summary>\n\n<br/>\n\n`
+    comment += resultContent
+    comment += '</details>\n'
+
+    if (!isLastResult) {
+      comment += `<hr/>\n`
+    }
   }
   logger('\n', comment)
 
