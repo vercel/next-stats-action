@@ -51,7 +51,7 @@ module.exports = async function addComment(
             change = Math.round((diffItemVal - mainItemVal) * 100) / 100
             // check if there is still a change after rounding
             if (change !== 0) {
-              if (!itemKey.endsWith('gzip')) {
+              if (!itemKey.endsWith('gzip') && itemKey !== 'buildDuration') {
                 totalChange += change
               }
               change = `${change < 0 ? '-' : '⚠️ +'}${prettify(
@@ -68,7 +68,7 @@ module.exports = async function addComment(
       })
       let groupTotalChange = ''
 
-      if (groupKey !== 'General' && totalChange !== 0) {
+      if (totalChange !== 0) {
         if (totalChange < 0) {
           resultHasDecrease = true
           groupTotalChange = ' ✅ Overall decrease ✅'
