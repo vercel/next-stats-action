@@ -122,7 +122,7 @@ module.exports = async function addComment(
         resultContent += diffContent
       }
     }
-    let increaseDecreaseNote
+    let increaseDecreaseNote = ''
 
     if (resultHasIncrease) {
       increaseDecreaseNote = ' (⚠️ Increase detected ⚠️)'
