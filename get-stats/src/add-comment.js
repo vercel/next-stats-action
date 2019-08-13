@@ -71,10 +71,10 @@ module.exports = async function addComment(
       if (totalChange !== 0) {
         if (totalChange < 0) {
           resultHasDecrease = true
-          groupTotalChange = ' ✅ Overall decrease ✅'
+          groupTotalChange = ' Overall decrease ✓'
         } else {
           resultHasIncrease = true
-          groupTotalChange = ' ⚠️ Overall increase ⚠️'
+          groupTotalChange = ' Overall increase ⚠️'
         }
       }
 
@@ -125,9 +125,9 @@ module.exports = async function addComment(
     let increaseDecreaseNote = ''
 
     if (resultHasIncrease) {
-      increaseDecreaseNote = ' (⚠️ Increase detected ⚠️)'
+      increaseDecreaseNote = ' (Increase detected ⚠️)'
     } else if (resultHasDecrease) {
-      increaseDecreaseNote = ' (✅ Decrease detected ✅)'
+      increaseDecreaseNote = ' (Decrease detected ✓)'
     }
 
     comment += `<details>\n`
