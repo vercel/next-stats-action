@@ -61,6 +61,7 @@ const StatsConfig = {
         }
       ],
       // an array of URLs to fetch while `appStartCommand` is running
+      // will be output to fetched-pages/${pathname}.html
       pagesToFetch: [
         'https://localhost:$PORT/page-1'
       ]

@@ -83,14 +83,10 @@ async function runConfigs(
         )
       }
 
-      if (diffing) {
-        curStats = true
-      } else {
-        const collectedStats = await collectStats(config, statsConfig)
-        curStats = {
-          ...curStats,
-          ...collectedStats,
-        }
+      const collectedStats = await collectStats(config, statsConfig)
+      curStats = {
+        ...curStats,
+        ...collectedStats,
       }
 
       if (mainRepoStats) {

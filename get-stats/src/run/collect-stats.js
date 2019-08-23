@@ -6,10 +6,57 @@ const glob = require('../util/glob')
 const gzipSize = require('gzip-size')
 const logger = require('../util/logger')
 const { spawn } = require('../util/exec')
+const { parse: urlParse } = require('url')
 const { statsAppDir } = require('../constants')
 
 module.exports = async function collectStats(runConfig = {}, statsConfig = {}) {
   const stats = {}
+
+  if (
+    statsConfig.appStartCommand &&
+    Array.isArray(runConfig.pagesToFetch) &&
+    runConfig.pagesToFetch.length > 0
+  ) {
+    const fetchedPagesDir = path.join(statsAppDir, 'fetched-pages')
+    const port = await getPort()
+    const child = spawn(statsConfig.appStartCommand, {
+      cwd: statsAppDir,
+      env: {
+        PORT: port,
+      },
+    })
+    // give server a second to start up
+    await new Promise(resolve => setTimeout(() => resolve(), 1500))
+    await fs.mkdirp(fetchedPagesDir)
+
+    for (let url of runConfig.pagesToFetch) {
+      url = url.replace('$PORT', port)
+      const { pathname } = urlParse(url)
+      try {
+        const res = await fetch(url)
+        if (!res.ok) {
+          throw new Error(`Failed to fetch ${url} got status: ${res.status}`)
+        }
+        const responseText = (await res.text()).trim()
+
+        let fileName = pathname === '/' ? '/index' : pathname
+        if (fileName.endsWith('/'))
+          fileName = fileName.substr(0, fileName.length - 1)
+        logger(
+          `Writing file to ${path.join(fetchedPagesDir, `${fileName}.html`)}`
+        )
+
+        await fs.writeFile(
+          path.join(fetchedPagesDir, `${fileName}.html`),
+          responseText,
+          'utf8'
+        )
+      } catch (err) {
+        logger.error(err)
+      }
+    }
+    child.kill()
+  }
 
   for (const fileGroup of runConfig.filesToTrack) {
     const { name, globs } = fileGroup
@@ -34,45 +81,6 @@ module.exports = async function collectStats(runConfig = {}, statsConfig = {}) {
       }
     }
     stats[name] = groupStats
-  }
-
-  if (
-    statsConfig.appStartCommand &&
-    Array.isArray(runConfig.pagesToFetch) &&
-    runConfig.pagesToFetch.length > 0
-  ) {
-    const groupStats = {}
-    const port = await getPort()
-    const child = spawn(statsConfig.appStartCommand, {
-      cwd: statsAppDir,
-      env: {
-        PORT: port,
-      },
-    })
-    // give server a second to start up
-    await new Promise(resolve => setTimeout(() => resolve(), 1500))
-
-    for (let url of runConfig.pagesToFetch) {
-      url = url.replace('$PORT', port)
-      let size = 0
-      let sizeGzip = 0
-      try {
-        const res = await fetch(url)
-        if (!res.ok) {
-          throw new Error(`Failed to fetch ${url} got status: ${res.status}`)
-        }
-        const responseText = await res.text()
-        size = responseText.length
-        sizeGzip = await gzipSize(responseText)
-      } catch (err) {
-        logger.error(err)
-      }
-      const urlKey = path.basename(url)
-      groupStats[urlKey] = size
-      groupStats[`${urlKey} gzip`] = sizeGzip
-    }
-    stats['Fetched pages'] = groupStats
-    child.kill()
   }
 
   return stats

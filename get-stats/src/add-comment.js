@@ -31,10 +31,11 @@ module.exports = async function addComment(
     Object.keys(result.mainRepoStats).forEach(groupKey => {
       const mainRepoGroup = result.mainRepoStats[groupKey]
       const diffRepoGroup = result.diffRepoStats[groupKey]
+      const itemKeys = Object.keys(mainRepoGroup)
       let groupTable = tableHead
       let totalChange = 0
 
-      Object.keys(mainRepoGroup).forEach(itemKey => {
+      itemKeys.forEach(itemKey => {
         const prettyType = itemKey === 'buildDuration' ? 'ms' : 'bytes'
         const mainItemVal = mainRepoGroup[itemKey]
         const diffItemVal = diffRepoGroup[itemKey]
@@ -94,10 +95,12 @@ module.exports = async function addComment(
         groupTable += `| Overall change |  |  | ${totalChange} |\n`
       }
 
-      resultContent += `<details>\n`
-      resultContent += `<summary><strong>${groupKey}</strong>${groupTotalChange}</summary>\n\n`
-      resultContent += groupTable
-      resultContent += `\n</details>\n\n`
+      if (itemKeys.length > 0) {
+        resultContent += `<details>\n`
+        resultContent += `<summary><strong>${groupKey}</strong>${groupTotalChange}</summary>\n\n`
+        resultContent += groupTable
+        resultContent += `\n</details>\n\n`
+      }
     })
 
     // add diffs
