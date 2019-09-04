@@ -61,13 +61,12 @@ module.exports = async function collectStats(runConfig = {}, statsConfig = {}) {
   for (const fileGroup of runConfig.filesToTrack) {
     const { name, globs } = fileGroup
     const groupStats = {}
-    const curFiles = []
+    const curFiles = new Set()
 
-    await Promise.all(
-      globs.map(async pattern => {
-        curFiles.push(...(await glob(pattern, { cwd: statsAppDir })))
-      })
-    )
+    for (const pattern of globs) {
+      const results = await glob(pattern, { cwd: statsAppDir, nodir: true })
+      results.forEach(result => curFiles.add(result))
+    }
 
     for (const file of curFiles) {
       const fileKey = path.basename(file)

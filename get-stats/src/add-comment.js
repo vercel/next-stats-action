@@ -8,6 +8,11 @@ const prettify = (val, type = 'bytes') => {
   return type === 'bytes' ? prettyBytes(val) : prettyMs(val)
 }
 
+const round = (num, places) => {
+  const placesFactor = Math.pow(10, places)
+  return Math.round(num * placesFactor) / placesFactor
+}
+
 module.exports = async function addComment(
   results = [],
   actionInfo,
@@ -31,17 +36,28 @@ module.exports = async function addComment(
     Object.keys(result.mainRepoStats).forEach(groupKey => {
       const mainRepoGroup = result.mainRepoStats[groupKey]
       const diffRepoGroup = result.diffRepoStats[groupKey]
-      const itemKeys = Object.keys(mainRepoGroup)
+      const itemKeys = new Set([
+        ...Object.keys(mainRepoGroup),
+        ...Object.keys(diffRepoGroup),
+      ])
       let groupTable = tableHead
+      let mainRepoTotal = 0
+      let diffRepoTotal = 0
       let totalChange = 0
 
       itemKeys.forEach(itemKey => {
         const prettyType = itemKey === 'buildDuration' ? 'ms' : 'bytes'
+        const notGzipVal = !itemKey.endsWith('gzip')
         const mainItemVal = mainRepoGroup[itemKey]
         const diffItemVal = diffRepoGroup[itemKey]
         const mainItemStr = prettify(mainItemVal, prettyType)
         const diffItemStr = prettify(diffItemVal, prettyType)
         let change = '✓'
+
+        if (notGzipVal) {
+          if (typeof mainItemVal === 'number') mainRepoTotal += mainItemVal
+          if (typeof diffItemVal === 'number') diffRepoTotal += diffItemVal
+        }
 
         // calculate the change
         if (mainItemVal !== diffItemVal) {
@@ -49,10 +65,11 @@ module.exports = async function addComment(
             typeof mainItemVal === 'number' &&
             typeof diffItemVal === 'number'
           ) {
-            change = Math.round((diffItemVal - mainItemVal) * 100) / 100
+            change = round(diffItemVal - mainItemVal, 2)
+
             // check if there is still a change after rounding
             if (change !== 0) {
-              if (!itemKey.endsWith('gzip') && itemKey !== 'buildDuration') {
+              if (notGzipVal && itemKey !== 'buildDuration') {
                 totalChange += change
               }
               change = `${change < 0 ? '-' : '⚠️ +'}${prettify(
@@ -92,10 +109,12 @@ module.exports = async function addComment(
             ? prettify(Math.abs(totalChange))
             : totalChange
         }`
-        groupTable += `| Overall change |  |  | ${totalChange} |\n`
+        groupTable += `| Overall change | ${prettyBytes(
+          round(mainRepoTotal, 2)
+        )} | ${prettyBytes(round(diffRepoTotal, 2))} | ${totalChange} |\n`
       }
 
-      if (itemKeys.length > 0) {
+      if (itemKeys.size > 0) {
         resultContent += `<details>\n`
         resultContent += `<summary><strong>${groupKey}</strong>${groupTotalChange}</summary>\n\n`
         resultContent += groupTable
