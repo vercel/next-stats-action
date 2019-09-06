@@ -81,8 +81,15 @@ module.exports = async function addComment(
             change = 'N/A'
           }
         }
+        const shortenedItemKey =
+          itemKey.length > 24
+            ? `${itemKey.substr(0, 12)}..${itemKey.substr(
+                itemKey.length - 12,
+                12
+              )}`
+            : itemKey
 
-        groupTable += `| ${itemKey} | ${mainItemStr} | ${diffItemStr} | ${change} |\n`
+        groupTable += `| ${shortenedItemKey} | ${mainItemStr} | ${diffItemStr} | ${change} |\n`
       })
       let groupTotalChange = ''
 
