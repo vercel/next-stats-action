@@ -53,8 +53,18 @@ module.exports = actionInfo => {
     },
     async linkPackages(repoDir = '') {
       await fs.remove(path.join(repoDir, 'node_modules'))
-      const pkgs = await fs.readdir(path.join(repoDir, 'packages'))
       const pkgPaths = new Map()
+      let pkgs
+
+      try {
+        pkgs = await fs.readdir(path.join(repoDir, 'packages'))
+      } catch (err) {
+        if (err.code === 'ENOENT') {
+          console.log('no packages to link')
+          return pkgPaths
+        }
+        throw err
+      }
 
       for (const pkg of pkgs) {
         const pkgPath = path.join(repoDir, 'packages', pkg)

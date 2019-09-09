@@ -7,7 +7,7 @@ See it in action at Next.js https://github.com/zeit/next.js
 ## Getting Started
 
 1. Add a `.stats-app` folder to your project with a [`stats-config.js`](#stats-config) and any files to run against for example a test app that is to be built
-2. Add the action to your [workflow](#configuring-workflow)
+2. Add the action to your [workflow](https://help.github.com/en/articles/configuring-a-workflow)
 3. Enjoy the stats
 
 ## Stats Config
@@ -19,6 +19,7 @@ const StatsConfig = {
   commentReleaseHeading: 'Stats from current release' | undefined,
   // the command to build your project if not done on post install
   initialBuildCommand: undefined | string,
+  skipInitialInstall: undefined | boolean,
   // the command to build the app (app source should be in `.stats-app`)
   appBuildCommand: string,
   appStartCommand: string | undefined,
@@ -79,7 +80,7 @@ const StatsConfig = {
         {
           name: 'Main Bundles',
           globs: [
-            'build/runtime/webpack-*.js'
+            'build/runtime/webpack-*.js',
             'build/runtime/main-*.js',
           ]
         }

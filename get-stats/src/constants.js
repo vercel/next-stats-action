@@ -8,6 +8,7 @@ const diffRepoDir = path.join(workDir, diffRepoName)
 const statsAppDir = path.join(workDir, 'stats-app')
 const diffingDir = path.join(workDir, 'diff')
 const allowedConfigLocations = [
+  './',
   '.stats-app',
   'test/.stats-app',
   '.github/.stats-app',

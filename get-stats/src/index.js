@@ -32,7 +32,7 @@ if (!allowedActions.has(actionInfo.actionName) && !actionInfo.isRelease) {
     }
 
     // load stats config from allowed locations
-    const { statsConfig, statsConfigPath } = loadStatsConfig()
+    const { statsConfig, relativeStatsAppDir } = loadStatsConfig()
 
     // clone main repository/ref
     if (!actionInfo.skipClone) {
@@ -62,7 +62,11 @@ if (!allowedActions.has(actionInfo.actionName) && !actionInfo.isRelease) {
     for (const dir of [mainRepoDir, diffRepoDir]) {
       logger(`Running initial build for ${dir}`)
       if (!actionInfo.skipClone) {
-        let buildCommand = `cd ${dir} && yarn install --prefer-offline`
+        let buildCommand = `cd ${dir}${
+          !statsConfig.skipInitialInstall
+            ? ' && yarn install --prefer-offline'
+            : ''
+        }`
 
         if (statsConfig.initialBuildCommand) {
           buildCommand += ` && ${statsConfig.initialBuildCommand}`
@@ -80,9 +84,9 @@ if (!allowedActions.has(actionInfo.actionName) && !actionInfo.isRelease) {
     // run the configs and post the comment
     const results = await runConfigs(statsConfig.configs, {
       statsConfig,
-      statsConfigPath,
       mainRepoPkgPaths,
       diffRepoPkgPaths,
+      relativeStatsAppDir,
     })
     await addComment(results, actionInfo, statsConfig)
     logger('finished')

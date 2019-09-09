@@ -5,14 +5,16 @@ const { diffRepoDir, allowedConfigLocations } = require('../constants')
 // load stats-config
 function loadStatsConfig() {
   let statsConfig
-  let statsConfigPath
-  let relativeConfigPath
+  let relativeStatsAppDir
 
   for (const configPath of allowedConfigLocations) {
     try {
-      relativeConfigPath = configPath
-      statsConfigPath = path.join(diffRepoDir, configPath)
-      statsConfig = require(path.join(statsConfigPath, 'stats-config.js'))
+      relativeStatsAppDir = configPath
+      statsConfig = require(path.join(
+        diffRepoDir,
+        configPath,
+        'stats-config.js'
+      ))
       break
     } catch (_) {
       /* */
@@ -27,8 +29,13 @@ function loadStatsConfig() {
     )
   }
 
-  logger('Got statsConfig at', relativeConfigPath, statsConfig, '\n')
-  return { statsConfig, statsConfigPath }
+  logger(
+    'Got statsConfig at',
+    path.join(relativeStatsAppDir, 'stats-config.js'),
+    statsConfig,
+    '\n'
+  )
+  return { statsConfig, relativeStatsAppDir }
 }
 
 module.exports = loadStatsConfig

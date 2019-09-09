@@ -6,7 +6,7 @@ const logger = require('../util/logger')
 const getDirSize = require('./get-dir-size')
 const collectStats = require('./collect-stats')
 const collectDiffs = require('./collect-diffs')
-const { statsAppDir } = require('../constants')
+const { statsAppDir, diffRepoDir, mainRepoDir } = require('../constants')
 
 const objVal = (obj, keys = '') => {
   let curVal = obj
@@ -19,18 +19,13 @@ const objVal = (obj, keys = '') => {
 
 async function runConfigs(
   configs = [],
-  { statsConfig, statsConfigPath, mainRepoPkgPaths, diffRepoPkgPaths },
+  { statsConfig, relativeStatsAppDir, mainRepoPkgPaths, diffRepoPkgPaths },
   diffing = false
 ) {
   const results = []
 
   for (const config of configs) {
     logger(`Running config: ${config.title}${diffing ? ' (diff)' : ''}`)
-
-    // clean statsAppDir
-    await fs.remove(statsAppDir)
-    await fs.copy(statsConfigPath, statsAppDir)
-    const origFiles = new Set(await fs.readdir(statsAppDir))
 
     let mainRepoStats
     let diffRepoStats
@@ -44,15 +39,20 @@ async function runConfigs(
         },
       }
 
-      // remove any new files
-      if (mainRepoStats) {
-        logger('Cleaning stats-app')
-        for (const file of await fs.readdir(statsAppDir)) {
-          if (!origFiles.has(file)) {
-            await fs.remove(path.join(statsAppDir, file))
-          }
-        }
-      }
+      // if stats-config is in root of project we're analyzing
+      // the whole project so copy from each repo
+      const curStatsAppPath =
+        relativeStatsAppDir === './'
+          ? mainRepoStats
+            ? diffRepoDir
+            : mainRepoDir
+          : path.join(diffRepoDir, relativeStatsAppDir)
+
+      // clean statsAppDir
+      await fs.remove(statsAppDir)
+      await fs.copy(curStatsAppPath, statsAppDir)
+
+      logger(`Copying ${curStatsAppPath} ${statsAppDir}`)
 
       // apply config files
       for (const configFile of config.configFiles || []) {
@@ -126,9 +126,9 @@ async function runConfigs(
                 ],
                 {
                   statsConfig,
-                  statsConfigPath,
                   mainRepoPkgPaths,
                   diffRepoPkgPaths,
+                  relativeStatsAppDir,
                 },
                 true
               )
