@@ -170,16 +170,32 @@ module.exports = async function addComment(
   }
   logger('\n', comment)
 
-  if (actionInfo.githubToken && actionInfo.commentEndpoint) {
+  if (
+    actionInfo.customCommentEndpoint ||
+    (actionInfo.githubToken && actionInfo.commentEndpoint)
+  ) {
     logger(`Posting results to ${actionInfo.commentEndpoint}`)
     try {
       const res = await fetch(actionInfo.commentEndpoint, {
         method: 'POST',
         headers: {
-          Authorization: `bearer ${actionInfo.githubToken}`,
+          ...(actionInfo.githubToken
+            ? {
+                Authorization: `bearer ${actionInfo.githubToken}`,
+              }
+            : {
+                'content-type': 'application/json',
+              }),
         },
         body: JSON.stringify({
           body: comment,
+          ...(!actionInfo.githubToken
+            ? {
+                isRelease: actionInfo.isRelease,
+                commitId: actionInfo.commitId,
+                issueId: actionInfo.issueId,
+              }
+            : {}),
         }),
       })
 

@@ -39,6 +39,8 @@ if (!allowedActions.has(actionInfo.actionName) && !actionInfo.isRelease) {
       await cloneRepo(statsConfig.mainRepo, mainRepoDir)
       await checkoutRef(statsConfig.mainBranch, mainRepoDir)
     }
+    /* eslint-disable-next-line */
+    actionInfo.commitId = await getCommitId(diffRepoDir)
 
     if (!actionInfo.skipClone) {
       if (actionInfo.isRelease) {
@@ -46,9 +48,13 @@ if (!allowedActions.has(actionInfo.actionName) && !actionInfo.isRelease) {
         const lastStableTag = await getLastStable(mainRepoDir)
         if (!lastStableTag) throw new Error('failed to get last stable tag')
         await checkoutRef(lastStableTag, mainRepoDir)
-        const releaseCommitId = await getCommitId(diffRepoDir)
         /* eslint-disable-next-line */
-        actionInfo.commentEndpoint = `https://api.github.com/repos/${statsConfig.mainRepo}/commits/${releaseCommitId}/comments`
+        actionInfo.commitId = await getCommitId(diffRepoDir)
+
+        if (!actionInfo.customCommentEndpoint) {
+          /* eslint-disable-next-line */
+          actionInfo.commentEndpoint = `https://api.github.com/repos/${statsConfig.mainRepo}/commits/${actionInfo.commitId}/comments`
+        }
       } else if (statsConfig.autoMergeMain) {
         logger('Attempting auto merge of main branch')
         await mergeBranch(statsConfig.mainBranch, mainRepoDir, diffRepoDir)

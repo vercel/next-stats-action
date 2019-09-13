@@ -3,10 +3,12 @@ const releaseTypes = new Set(['release', 'published'])
 
 module.exports = function actionInfo() {
   const {
+    ISSUE_ID,
     SKIP_CLONE,
     GITHUB_REF,
     GIT_ROOT_DIR,
     GITHUB_ACTION,
+    COMMENT_ENDPOINT,
     GITHUB_REPOSITORY,
     GITHUB_EVENT_PATH,
     PR_STATS_COMMENT_TOKEN,
@@ -19,10 +21,13 @@ module.exports = function actionInfo() {
     skipClone: SKIP_CLONE,
     actionName: GITHUB_ACTION,
     githubToken: PR_STATS_COMMENT_TOKEN,
-    commentEndpoint: null,
+    commentEndpoint: COMMENT_ENDPOINT,
+    customCommentEndpoint: !!COMMENT_ENDPOINT,
     gitRoot: GIT_ROOT_DIR || 'https://github.com/',
     prRepo: GITHUB_REPOSITORY,
     prRef: GITHUB_REF,
+    commitId: null,
+    issueId: ISSUE_ID,
     isRelease: releaseTypes.has(GITHUB_ACTION),
   }
 
@@ -39,10 +44,13 @@ module.exports = function actionInfo() {
       const prData = event['pull_request']
 
       if (prData) {
-        info.commentEndpoint = prData._links.comments || ''
         info.prRepo = prData.head.repo.full_name
         info.prRef = prData.head.ref
+        info.issueId = prData.number
 
+        if (!info.commentEndpoint) {
+          info.commentEndpoint = prData._links.comments || ''
+        }
         // comment endpoint might be under `href`
         if (typeof info.commentEndpoint === 'object') {
           info.commentEndpoint = info.commentEndpoint.href
