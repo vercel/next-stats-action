@@ -17,12 +17,15 @@ module.exports = function actionInfo() {
   delete process.env.GITHUB_TOKEN
   delete process.env.PR_STATS_COMMENT_TOKEN
 
+  // only use custom endpoint if we don't have a token
+  const commentEndpoint = !PR_STATS_COMMENT_TOKEN && COMMENT_ENDPOINT
+
   const info = {
+    commentEndpoint,
     skipClone: SKIP_CLONE,
     actionName: GITHUB_ACTION,
     githubToken: PR_STATS_COMMENT_TOKEN,
-    commentEndpoint: COMMENT_ENDPOINT,
-    customCommentEndpoint: !!COMMENT_ENDPOINT,
+    customCommentEndpoint: !!commentEndpoint,
     gitRoot: GIT_ROOT_DIR || 'https://github.com/',
     prRepo: GITHUB_REPOSITORY,
     prRef: GITHUB_REF,

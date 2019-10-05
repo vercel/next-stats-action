@@ -175,6 +175,22 @@ module.exports = async function addComment(
     (actionInfo.githubToken && actionInfo.commentEndpoint)
   ) {
     logger(`Posting results to ${actionInfo.commentEndpoint}`)
+
+    const body = {
+      body: comment,
+      ...(!actionInfo.githubToken
+        ? {
+            isRelease: actionInfo.isRelease,
+            commitId: actionInfo.commitId,
+            issueId: actionInfo.issueId,
+          }
+        : {}),
+    }
+
+    if (actionInfo.customCommentEndpoint) {
+      logger(`Using body ${JSON.stringify({...body, body: 'OMITTED'})}`)
+    }
+
     try {
       const res = await fetch(actionInfo.commentEndpoint, {
         method: 'POST',
@@ -187,16 +203,7 @@ module.exports = async function addComment(
                 'content-type': 'application/json',
               }),
         },
-        body: JSON.stringify({
-          body: comment,
-          ...(!actionInfo.githubToken
-            ? {
-                isRelease: actionInfo.isRelease,
-                commitId: actionInfo.commitId,
-                issueId: actionInfo.issueId,
-              }
-            : {}),
-        }),
+        body: JSON.stringify(body),
       })
 
       if (!res.ok) {
