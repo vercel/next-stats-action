@@ -45,7 +45,7 @@ if (!allowedActions.has(actionInfo.actionName) && !actionInfo.isRelease) {
     if (!actionInfo.skipClone) {
       if (actionInfo.isRelease) {
         logger('Release detected, resetting mainRepo to last stable tag')
-        const lastStableTag = await getLastStable(mainRepoDir)
+        const lastStableTag = await getLastStable(mainRepoDir, actionInfo.prRef)
         if (!lastStableTag) throw new Error('failed to get last stable tag')
         await checkoutRef(lastStableTag, mainRepoDir)
         /* eslint-disable-next-line */

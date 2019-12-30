@@ -13,7 +13,7 @@ module.exports = actionInfo => {
     async checkoutRef(ref = '', repoDir = '') {
       await exec(`cd ${repoDir} && git fetch && git checkout ${ref}`)
     },
-    async getLastStable(repoDir = '') {
+    async getLastStable(repoDir = '', ref) {
       const { stdout } = await exec(`cd ${repoDir} && git tag -l`)
       const tags = stdout.trim().split('\n')
       let lastStableTag
@@ -21,7 +21,7 @@ module.exports = actionInfo => {
       for (let i = tags.length - 1; i >= 0; i--) {
         const curTag = tags[i]
         // stable doesn't include `-canary` or `-beta`
-        if (!curTag.includes('-')) {
+        if (!curTag.includes('-') && curTag !== ref) {
           lastStableTag = curTag
           break
         }
