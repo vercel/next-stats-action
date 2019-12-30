@@ -23,7 +23,7 @@ if (!allowedActions.has(actionInfo.actionName) && !actionInfo.isRelease) {
   process.exit(0)
 }
 
-(async () => {
+;(async () => {
   try {
     // clone PR/newer repository/ref first to get settings
     if (!actionInfo.skipClone) {

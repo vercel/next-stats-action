@@ -7,20 +7,26 @@ const gzipSize = require('gzip-size')
 const logger = require('../util/logger')
 const { spawn } = require('../util/exec')
 const { parse: urlParse } = require('url')
-const { statsAppDir } = require('../constants')
+const { statsAppDir, diffingDir } = require('../constants')
 
-module.exports = async function collectStats(runConfig = {}, statsConfig = {}) {
+module.exports = async function collectStats(
+  runConfig = {},
+  statsConfig = {},
+  fromDiff = false
+) {
   const stats = {}
+  const curDir = fromDiff ? diffingDir : statsAppDir
 
   if (
+    !fromDiff &&
     statsConfig.appStartCommand &&
     Array.isArray(runConfig.pagesToFetch) &&
     runConfig.pagesToFetch.length > 0
   ) {
-    const fetchedPagesDir = path.join(statsAppDir, 'fetched-pages')
+    const fetchedPagesDir = path.join(curDir, 'fetched-pages')
     const port = await getPort()
     const child = spawn(statsConfig.appStartCommand, {
-      cwd: statsAppDir,
+      cwd: curDir,
       env: {
         PORT: port,
       },
@@ -64,13 +70,13 @@ module.exports = async function collectStats(runConfig = {}, statsConfig = {}) {
     const curFiles = new Set()
 
     for (const pattern of globs) {
-      const results = await glob(pattern, { cwd: statsAppDir, nodir: true })
+      const results = await glob(pattern, { cwd: curDir, nodir: true })
       results.forEach(result => curFiles.add(result))
     }
 
     for (const file of curFiles) {
       const fileKey = path.basename(file)
-      const absPath = path.join(statsAppDir, file)
+      const absPath = path.join(curDir, file)
       try {
         const fileInfo = await fs.stat(absPath)
         groupStats[fileKey] = fileInfo.size

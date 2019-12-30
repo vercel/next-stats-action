@@ -88,9 +88,12 @@ async function runConfigs(
             if (groupKey === 'General') continue
             let changeDetected = config.diff === 'always'
 
-            if (!changeDetected) {
-              const curDiffs = await collectDiffs(config.filesToTrack)
-              changeDetected = Object.keys(curDiffs).length > 0
+            const curDiffs = await collectDiffs(config.filesToTrack)
+            changeDetected = changeDetected || Object.keys(curDiffs).length > 0
+
+            diffRepoStats = {
+              ...diffRepoStats,
+              ...(await collectStats(config, statsConfig, true)),
             }
 
             if (changeDetected) {

@@ -13,6 +13,8 @@ const round = (num, places) => {
   return Math.round(num * placesFactor) / placesFactor
 }
 
+const twoMB = 2 * 1024 * 1024
+
 module.exports = async function addComment(
   results = [],
   actionInfo,
@@ -47,17 +49,18 @@ module.exports = async function addComment(
 
       itemKeys.forEach(itemKey => {
         const prettyType = itemKey === 'buildDuration' ? 'ms' : 'bytes'
-        const notGzipVal = !itemKey.endsWith('gzip')
+        const isGzipItem = itemKey.endsWith('gzip')
         const mainItemVal = mainRepoGroup[itemKey]
         const diffItemVal = diffRepoGroup[itemKey]
         const mainItemStr = prettify(mainItemVal, prettyType)
         const diffItemStr = prettify(diffItemVal, prettyType)
         let change = '✓'
 
-        if (notGzipVal) {
-          if (typeof mainItemVal === 'number') mainRepoTotal += mainItemVal
-          if (typeof diffItemVal === 'number') diffRepoTotal += diffItemVal
-        }
+        // only show gzip values
+        if (!isGzipItem && groupKey !== 'General') return
+
+        if (typeof mainItemVal === 'number') mainRepoTotal += mainItemVal
+        if (typeof diffItemVal === 'number') diffRepoTotal += diffItemVal
 
         // calculate the change
         if (mainItemVal !== diffItemVal) {
@@ -69,7 +72,7 @@ module.exports = async function addComment(
 
             // check if there is still a change after rounding
             if (change !== 0) {
-              if (notGzipVal && itemKey !== 'buildDuration') {
+              if (itemKey !== 'buildDuration') {
                 totalChange += change
               }
               change = `${change < 0 ? '-' : '⚠️ +'}${prettify(
@@ -98,7 +101,12 @@ module.exports = async function addComment(
           resultHasDecrease = true
           groupTotalChange = ' Overall decrease ✓'
         } else {
-          resultHasIncrease = true
+          if (
+            (groupKey !== 'General' && totalChange > 5) ||
+            totalChange > twoMB
+          ) {
+            resultHasIncrease = true
+          }
           groupTotalChange = ' Overall increase ⚠️'
         }
       }
@@ -188,7 +196,7 @@ module.exports = async function addComment(
     }
 
     if (actionInfo.customCommentEndpoint) {
-      logger(`Using body ${JSON.stringify({...body, body: 'OMITTED'})}`)
+      logger(`Using body ${JSON.stringify({ ...body, body: 'OMITTED' })}`)
     }
 
     try {

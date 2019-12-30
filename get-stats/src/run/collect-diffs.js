@@ -53,29 +53,25 @@ module.exports = async function collectDiffs(
   await exec(`cd ${diffingDir} && git add .`, true)
 
   if (initial) {
-    const { stdout: gitName } = await exec(
-      `git config --global user.name`
+    await exec(
+      `cd ${diffingDir} && ` +
+        `git config user.name "next stats" && ` +
+        `git config user.email "stats@localhost"`
     )
-    if (gitName.trim().length < 1) {
-      await exec(`git config --global user.name "next stats"`)
-      await exec(`git config --global user.email "stats@localhost"`)
-    }
     await exec(`cd ${diffingDir} && git commit -m 'initial commit'`)
   } else {
     let { stdout: renamedFiles } = await exec(
       `cd ${diffingDir} && git diff --name-status HEAD`
     )
-    renamedFiles = renamedFiles.trim().split('\n').filter(line => line.startsWith('R'))
+    renamedFiles = renamedFiles
+      .trim()
+      .split('\n')
+      .filter(line => line.startsWith('R'))
 
     for (const line of renamedFiles) {
       const [, prev, cur] = line.split('\t')
-      await fs.move(
-        path.join(diffingDir, cur),
-        path.join(diffingDir, prev)
-      )
-      await exec(
-        `cd ${diffingDir} && git add ${prev}`
-      )
+      await fs.move(path.join(diffingDir, cur), path.join(diffingDir, prev))
+      await exec(`cd ${diffingDir} && git add ${prev}`)
     }
 
     let { stdout: changedFiles } = await exec(
