@@ -11,7 +11,7 @@ const env = {
 
 function exec(command, noLog = false) {
   if (!noLog) logger(`exec: ${command}`)
-  return execP(command, { env, timeout: 240 })
+  return execP(command, { env, timeout: 180 * 1000 })
 }
 
 exec.spawn = function spawn(command = '', opts = {}) {
