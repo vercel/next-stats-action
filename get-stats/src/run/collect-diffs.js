@@ -53,7 +53,9 @@ module.exports = async function collectDiffs(
   await exec(`cd ${diffingDir} && git add .`, true)
 
   if (initial) {
-    await exec(`cd ${diffingDir} && git commit --author="next stats <stats@localhost>" -m 'initial commit'`)
+    await exec(`git config --global user.name "next stats"`)
+    await exec(`git config --global user.email "stats@localhost"`)
+    await exec(`cd ${diffingDir} && git commit -m 'initial commit'`)
   } else {
     let { stdout: renamedFiles } = await exec(
       `cd ${diffingDir} && git diff --name-status HEAD`
