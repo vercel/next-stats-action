@@ -80,6 +80,27 @@ async function runConfigs(
         ...collectedStats,
       }
 
+      const applyRenames = (renames, stats) => {
+        if (renames) {
+          for (const rename of renames) {
+            Object.keys(stats).forEach(group => {
+              Object.keys(stats[group]).forEach(item => {
+                let { cur, prev } = rename
+                cur = path.basename(cur)
+                prev = path.basename(prev)
+
+                if (cur === item) {
+                  stats[group][prev] = stats[group][item]
+                  stats[group][prev + ' gzip'] = stats[group][item + ' gzip']
+                  delete stats[group][item]
+                  delete stats[group][item + ' gzip']
+                }
+              })
+            })
+          }
+        }
+      }
+
       if (mainRepoStats) {
         diffRepoStats = curStats
 
@@ -91,10 +112,7 @@ async function runConfigs(
             const curDiffs = await collectDiffs(config.filesToTrack)
             changeDetected = changeDetected || Object.keys(curDiffs).length > 0
 
-            diffRepoStats = {
-              ...diffRepoStats,
-              ...(await collectStats(config, statsConfig, true)),
-            }
+            applyRenames(curDiffs._renames, diffRepoStats)
 
             if (changeDetected) {
               logger('Detected change, running diff')

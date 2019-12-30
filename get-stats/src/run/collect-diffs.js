@@ -2,7 +2,6 @@ const path = require('path')
 const fs = require('fs-extra')
 const exec = require('../util/exec')
 const glob = require('../util/glob')
-const { prettyPrint } = require('html')
 const logger = require('../util/logger')
 const { statsAppDir, diffingDir } = require('../constants')
 
@@ -41,13 +40,11 @@ module.exports = async function collectDiffs(
 
       const diffDest = path.join(diffingDir, file)
       await fs.copy(absPath, diffDest)
-
-      if (file.match(/fetched-pages.*?\.html$/)) {
-        // we want to clean up the HTML for diffing
-        const srcHTML = await fs.readFile(diffDest, 'utf8')
-        await fs.writeFile(diffDest, prettyPrint(srcHTML), 'utf8')
-      }
     }
+    await exec(
+      `cd ${diffingDir} && `+
+      `yarn prettier --write ${curFiles.map(f => path.join(diffingDir, f)).join(' ')}`
+    )
   }
 
   await exec(`cd ${diffingDir} && git add .`, true)
@@ -68,11 +65,17 @@ module.exports = async function collectDiffs(
       .split('\n')
       .filter(line => line.startsWith('R'))
 
+    diffs._renames = []
+
     for (const line of renamedFiles) {
       const [, prev, cur] = line.split('\t')
       await fs.move(path.join(diffingDir, cur), path.join(diffingDir, prev))
-      await exec(`cd ${diffingDir} && git add ${prev}`)
+      diffs._renames.push({
+        prev,
+        cur
+      })
     }
+    await exec(`cd ${diffingDir} && git add .`)
 
     let { stdout: changedFiles } = await exec(
       `cd ${diffingDir} && git diff --name-only HEAD`
