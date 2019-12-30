@@ -8,15 +8,6 @@ const collectStats = require('./collect-stats')
 const collectDiffs = require('./collect-diffs')
 const { statsAppDir, diffRepoDir, mainRepoDir } = require('../constants')
 
-const objVal = (obj, keys = '') => {
-  let curVal = obj
-
-  for (const key of keys.split('!!')) {
-    curVal = curVal && typeof curVal === 'object' && curVal[key]
-  }
-  return curVal
-}
-
 async function runConfigs(
   configs = [],
   { statsConfig, relativeStatsAppDir, mainRepoPkgPaths, diffRepoPkgPaths },
@@ -98,21 +89,8 @@ async function runConfigs(
             let changeDetected = config.diff === 'always'
 
             if (!changeDetected) {
-              Object.keys(curStats[groupKey]).some(itemKey => {
-                if (itemKey.endsWith('gzip')) return false
-                let diffItemVal = objVal(
-                  diffRepoStats,
-                  `${groupKey}!!${itemKey}`
-                )
-                let mainItemVal = objVal(
-                  mainRepoStats,
-                  `${groupKey}!!${itemKey}`
-                )
-                diffItemVal = typeof diffItemVal === 'number' ? diffItemVal : 0
-                mainItemVal = typeof mainItemVal === 'number' ? mainItemVal : 0
-                changeDetected = diffItemVal !== mainItemVal
-                return changeDetected
-              })
+              const curDiffs = await collectDiffs(config.filesToTrack)
+              changeDetected = Object.keys(curDiffs).length > 0
             }
 
             if (changeDetected) {
@@ -143,7 +121,8 @@ async function runConfigs(
         }
       } else {
         // set up diffing folder and copy initial files
-        if (diffing) await collectDiffs(config.filesToTrack, true)
+        await collectDiffs(config.filesToTrack, true)
+
         /* eslint-disable-next-line */
         mainRepoStats = curStats
       }
