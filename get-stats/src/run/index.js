@@ -113,6 +113,7 @@ async function runConfigs(
             changeDetected = changeDetected || Object.keys(curDiffs).length > 0
 
             applyRenames(curDiffs._renames, diffRepoStats)
+            delete curDiffs._renames
 
             if (changeDetected) {
               logger('Detected change, running diff')
@@ -131,6 +132,7 @@ async function runConfigs(
                 },
                 true
               )
+              delete diffs._renames
               break
             }
           }
