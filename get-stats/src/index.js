@@ -25,6 +25,14 @@ if (!allowedActions.has(actionInfo.actionName) && !actionInfo.isRelease) {
 
 ;(async () => {
   try {
+    const { stdout: gitName } = await exec(`git config --global user.name`)
+    if (!gitName) {
+      await exec(
+        `git config --global user.name "next stats" && ` +
+        `git config --global user.email "stats@localhost"`
+      )
+    }
+
     // clone PR/newer repository/ref first to get settings
     if (!actionInfo.skipClone) {
       await cloneRepo(actionInfo.prRepo, diffRepoDir)
