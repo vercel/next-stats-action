@@ -1,4 +1,6 @@
 #!/bin/bash
-
 set -eu # stop on error
+
+export HOME=/root
+
 node /get-stats/

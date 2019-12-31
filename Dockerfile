@@ -9,8 +9,8 @@ COPY ./get-stats /get-stats
 # Install node_modules
 RUN cd /get-stats && yarn install --production
 
-RUN git config --global user.name 'next stats'
 RUN git config --global user.email 'stats@localhost'
+RUN git config --global user.name 'next stats'
 
 COPY entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
