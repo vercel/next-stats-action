@@ -21,7 +21,7 @@ module.exports = actionInfo => {
       for (let i = tags.length - 1; i >= 0; i--) {
         const curTag = tags[i]
         // stable doesn't include `-canary` or `-beta`
-        if (!curTag.includes('-') && curTag !== ref) {
+        if (!curTag.includes('-') && !ref.includes(curTag)) {
           lastStableTag = curTag
           break
         }
