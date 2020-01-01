@@ -44,8 +44,10 @@ module.exports = async function collectDiffs(
 
     if (curFiles.length > 0) {
       await exec(
-        `cd ${diffingDir} && `+
-        `yarn prettier --write ${curFiles.map(f => path.join(diffingDir, f)).join(' ')}`
+        `cd ${diffingDir} && ` +
+          `yarn prettier --write ${curFiles
+            .map(f => path.join(diffingDir, f))
+            .join(' ')}`
       )
     }
   }
@@ -70,7 +72,7 @@ module.exports = async function collectDiffs(
       await fs.move(path.join(diffingDir, cur), path.join(diffingDir, prev))
       diffs._renames.push({
         prev,
-        cur
+        cur,
       })
     }
     await exec(`cd ${diffingDir} && git add .`)

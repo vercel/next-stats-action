@@ -13,12 +13,10 @@ const round = (num, places) => {
   return Math.round(num * placesFactor) / placesFactor
 }
 
-const shortenLabel = itemKey => itemKey.length > 24
-  ? `${itemKey.substr(0, 12)}..${itemKey.substr(
-      itemKey.length - 12,
-      12
-    )}`
-  : itemKey
+const shortenLabel = itemKey =>
+  itemKey.length > 24
+    ? `${itemKey.substr(0, 12)}..${itemKey.substr(itemKey.length - 12, 12)}`
+    : itemKey
 
 const twoMB = 2 * 1024 * 1024
 
@@ -33,7 +31,11 @@ module.exports = async function addComment(
       : statsConfig.commentHeading || 'Stats from current PR'
   }\n\n`
 
-  const tableHead = `|  | ${statsConfig.mainRepo} ${statsConfig.mainBranch} ${actionInfo.lastStableTag || ''} | ${actionInfo.prRepo} ${actionInfo.prRef} | Change |\n| - | - | - | - |\n`
+  const tableHead = `|  | ${statsConfig.mainRepo} ${
+    statsConfig.mainBranch
+  } ${actionInfo.lastStableTag || ''} | ${actionInfo.prRepo} ${
+    actionInfo.prRef
+  } | Change |\n| - | - | - | - |\n`
 
   for (let i = 0; i < results.length; i++) {
     const result = results[i]
@@ -92,7 +94,9 @@ module.exports = async function addComment(
           }
         }
 
-        groupTable += `| ${shortenLabel(itemKey)} | ${mainItemStr} | ${diffItemStr} | ${change} |\n`
+        groupTable += `| ${shortenLabel(
+          itemKey
+        )} | ${mainItemStr} | ${diffItemStr} | ${change} |\n`
       })
       let groupTotalChange = ''
 
@@ -145,7 +149,9 @@ module.exports = async function addComment(
       Object.keys(result.diffs).forEach(itemKey => {
         const curDiff = result.diffs[itemKey]
         diffContent += `<details>\n`
-        diffContent += `<summary>Diff for <strong>${shortenLabel(itemKey)}</strong></summary>\n\n`
+        diffContent += `<summary>Diff for <strong>${shortenLabel(
+          itemKey
+        )}</strong></summary>\n\n`
 
         if (curDiff.length > 36 * 1000) {
           diffContent += 'Diff too large to display'

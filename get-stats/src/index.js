@@ -25,8 +25,10 @@ if (!allowedActions.has(actionInfo.actionName) && !actionInfo.isRelease) {
 
 ;(async () => {
   try {
-    const { stdout: idk } = await exec('git config user.name && git config user.email')
-    console.log('git result:', idk);
+    const { stdout: gitName } = await exec(
+      'git config user.name && git config user.email'
+    )
+    console.log('git author result:', gitName)
 
     // clone PR/newer repository/ref first to get settings
     if (!actionInfo.skipClone) {
