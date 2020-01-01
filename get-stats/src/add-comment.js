@@ -33,7 +33,7 @@ module.exports = async function addComment(
       : statsConfig.commentHeading || 'Stats from current PR'
   }\n\n`
 
-  const tableHead = `|  | ${statsConfig.mainRepo} ${statsConfig.mainBranch} | ${actionInfo.prRepo} ${actionInfo.prRef} | Change |\n| - | - | - | - |\n`
+  const tableHead = `|  | ${statsConfig.mainRepo} ${statsConfig.mainBranch} ${actionInfo.lastStableTag || ''} | ${actionInfo.prRepo} ${actionInfo.prRef} | Change |\n| - | - | - | - |\n`
 
   for (let i = 0; i < results.length; i++) {
     const result = results[i]

@@ -51,6 +51,9 @@ if (!allowedActions.has(actionInfo.actionName) && !actionInfo.isRelease) {
         const lastStableTag = await getLastStable(mainRepoDir, actionInfo.prRef)
         if (!lastStableTag) throw new Error('failed to get last stable tag')
         await checkoutRef(lastStableTag, mainRepoDir)
+
+        /* eslint-disable-next-line */
+        actionInfo.lastStableTag = lastStableTag
         /* eslint-disable-next-line */
         actionInfo.commitId = await getCommitId(diffRepoDir)
 
