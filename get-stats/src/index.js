@@ -23,7 +23,7 @@ if (!allowedActions.has(actionInfo.actionName) && !actionInfo.isRelease) {
   process.exit(0)
 }
 
-;(async () => {
+(async () => {
   try {
     const { stdout: gitName } = await exec(
       'git config user.name && git config user.email'

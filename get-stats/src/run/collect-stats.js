@@ -31,8 +31,20 @@ module.exports = async function collectStats(
         PORT: port,
       },
     })
+    let exitCode = null
+
+    child.on('exit', code => {
+      exitCode = code
+    })
     // give server a second to start up
     await new Promise(resolve => setTimeout(() => resolve(), 1500))
+
+    if (exitCode !== null) {
+      throw new Error(
+        `Failed to run \`${statsConfig.appStartCommand}\` process exited with code ${exitCode}`
+      )
+    }
+
     await fs.mkdirp(fetchedPagesDir)
 
     for (let url of runConfig.pagesToFetch) {

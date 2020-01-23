@@ -22,7 +22,7 @@ exec.spawn = function spawn(command = '', opts = {}) {
       ...env,
       ...opts.env,
     },
-    stdio: 'inherit',
+    stdio: opts.stdio || 'inherit',
   })
 
   child.on('exit', (code, signal) => {
