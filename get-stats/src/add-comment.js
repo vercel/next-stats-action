@@ -68,8 +68,11 @@ module.exports = async function addComment(
         // only show gzip values
         if (!isGzipItem && groupKey !== 'General') return
 
-        if (typeof mainItemVal === 'number') mainRepoTotal += mainItemVal
-        if (typeof diffItemVal === 'number') diffRepoTotal += diffItemVal
+
+        if (itemKey !== 'buildDuration') {
+          if (typeof mainItemVal === 'number') mainRepoTotal += mainItemVal
+          if (typeof diffItemVal === 'number') diffRepoTotal += diffItemVal
+        }
 
         // calculate the change
         if (mainItemVal !== diffItemVal) {
@@ -81,9 +84,6 @@ module.exports = async function addComment(
 
             // check if there is still a change after rounding
             if (change !== 0) {
-              if (itemKey !== 'buildDuration') {
-                totalChange += change
-              }
               change = `${change < 0 ? '-' : '⚠️ +'}${prettify(
                 Math.abs(change),
                 prettyType
@@ -99,6 +99,8 @@ module.exports = async function addComment(
         )} | ${mainItemStr} | ${diffItemStr} | ${change} |\n`
       })
       let groupTotalChange = ''
+
+      totalChange = diffRepoTotal - mainRepoTotal
 
       if (totalChange !== 0) {
         if (totalChange < 0) {
