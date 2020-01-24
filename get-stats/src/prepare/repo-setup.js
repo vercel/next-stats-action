@@ -84,7 +84,7 @@ module.exports = actionInfo => {
         for (const pkg of pkgDatas.keys()) {
           const { pkgDataPath } = pkgDatas.get(pkg)
           if (!pkgData.dependencies || !pkgData.dependencies[pkg]) continue
-          pkgData.dependencies[pkg] = pkgDataPath
+          pkgData.dependencies[pkg] = path.dirname(pkgDataPath)
         }
         await fs.writeFile(
           pkgDataPath,
