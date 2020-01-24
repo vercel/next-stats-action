@@ -68,11 +68,11 @@ module.exports = actionInfo => {
 
       for (const pkg of pkgs) {
         const pkgPath = path.join(repoDir, 'packages', pkg)
-        pkgPaths.set(pkg, pkgPath)
         await fs.remove(path.join(pkgPath, 'node_modules'))
 
         const pkgDataPath = path.join(pkgPath, 'package.json')
         const pkgData = require(pkgDataPath)
+        pkgPaths.set(pkgData.name, pkgPath)
 
         for (const pkg of pkgs) {
           if (!pkgData.dependencies || !pkgData.dependencies[pkg]) continue
