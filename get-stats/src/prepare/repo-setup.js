@@ -54,6 +54,7 @@ module.exports = actionInfo => {
     async linkPackages(repoDir = '') {
       await fs.remove(path.join(repoDir, 'node_modules'))
       const pkgPaths = new Map()
+      const pkgDatas = new Map()
       let pkgs
 
       try {
@@ -72,11 +73,18 @@ module.exports = actionInfo => {
 
         const pkgDataPath = path.join(pkgPath, 'package.json')
         const pkgData = require(pkgDataPath)
-        pkgPaths.set(pkgData.name, pkgPath)
+        const { name } = pkgData
+        pkgDatas.set(name, { pkgDataPath, pkgData })
+        pkgPaths.set(name, pkgPath)
+      }
 
-        for (const pkg of pkgs) {
+      for (const pkg of pkgDatas.keys()) {
+        const { pkgDataPath, pkgData } = pkgDatas.get(pkg)
+
+        for (const pkg of pkgDatas.keys()) {
+          const { pkgDataPath } = pkgDatas.get(pkg)
           if (!pkgData.dependencies || !pkgData.dependencies[pkg]) continue
-          pkgData.dependencies[pkg] = path.join(repoDir, 'packages', pkg)
+          pkgData.dependencies[pkg] = pkgDataPath
         }
         await fs.writeFile(
           pkgDataPath,
