@@ -3,4 +3,4 @@ set -eu # stop on error
 
 export HOME=/root
 
-node src/index.js
+node /next-stats/src/index.js
