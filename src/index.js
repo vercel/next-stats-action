@@ -75,13 +75,11 @@ if (!allowedActions.has(actionInfo.actionName) && !actionInfo.isRelease) {
     // run install/initialBuildCommand
     const repoDirs = [mainRepoDir, diffRepoDir]
 
-    await Promise.all(repoDirs.map(async (dir, idx) => {
+    for (const dir of repoDirs) {
       logger(`Running initial build for ${dir}`)
       if (!actionInfo.skipClone) {
         let buildCommand = `cd ${dir}${
-          !statsConfig.skipInitialInstall
-            ? ' && yarn install'
-            : ''
+          !statsConfig.skipInitialInstall ? ' && yarn install' : ''
         }`
 
         if (statsConfig.initialBuildCommand) {
@@ -93,9 +91,9 @@ if (!allowedActions.has(actionInfo.actionName) && !actionInfo.isRelease) {
       logger(`Linking packages in ${dir}`)
       const pkgPaths = await linkPackages(dir)
 
-      if (idx === 0) mainRepoPkgPaths = pkgPaths
+      if (dir === mainRepoDir) mainRepoPkgPaths = pkgPaths
       else diffRepoPkgPaths = pkgPaths
-    }))
+    }
 
     // run the configs and post the comment
     const results = await runConfigs(statsConfig.configs, {
