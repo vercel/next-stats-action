@@ -19,13 +19,13 @@ module.exports = async function collectDiffs(
     // remove any previous files in case they won't be overwritten
     const toRemove = await glob('!(.git)', { cwd: diffingDir, dot: true })
 
-    for (const file of toRemove) {
-      await fs.remove(path.join(diffingDir, file))
-    }
+    await Promise.all(toRemove.map(file =>
+      fs.remove(path.join(diffingDir, file))
+    ))
   }
   const diffs = {}
 
-  for (const fileGroup of filesToTrack) {
+  await Promise.all(filesToTrack.map(async fileGroup => {
     const { globs } = fileGroup
     const curFiles = []
 
@@ -50,7 +50,7 @@ module.exports = async function collectDiffs(
             .join(' ')}`
       )
     }
-  }
+  }))
 
   await exec(`cd ${diffingDir} && git add .`, true)
 
@@ -67,14 +67,15 @@ module.exports = async function collectDiffs(
 
     diffs._renames = []
 
-    for (const line of renamedFiles) {
+    await Promise.all(renamedFiles.map(async line => {
       const [, prev, cur] = line.split('\t')
       await fs.move(path.join(diffingDir, cur), path.join(diffingDir, prev))
       diffs._renames.push({
         prev,
         cur,
       })
-    }
+    }))
+
     await exec(`cd ${diffingDir} && git add .`)
 
     let { stdout: changedFiles } = await exec(
@@ -82,13 +83,13 @@ module.exports = async function collectDiffs(
     )
     changedFiles = changedFiles.trim().split('\n')
 
-    for (const file of changedFiles) {
+    await Promise.all(changedFiles.map(async file => {
       const fileKey = path.basename(file)
       const hasFile = await fs.exists(path.join(diffingDir, file))
 
       if (!hasFile) {
         diffs[fileKey] = 'deleted'
-        continue
+        return
       }
       let { stdout } = await exec(
         `cd ${diffingDir} && git diff --minimal HEAD ${file}`
@@ -98,7 +99,7 @@ module.exports = async function collectDiffs(
       if (stdout.length > 0) {
         diffs[fileKey] = stdout
       }
-    }
+    }))
   }
   return diffs
 }

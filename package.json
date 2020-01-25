@@ -4,21 +4,16 @@
   "main": "src/index.js",
   "license": "MIT",
   "scripts": {
-    "lint": "eslint --fix '**/*.js'",
-    "format": "prettier --write --ignore-path .eslintignore '**/*.js'",
+    "lint": "eslint . --ext js,jsx,ts,tsx --fix --max-warnings=0",
+    "format": "prettier --write \"**/*.{js,jsx,json,ts,tsx,md,mdx,css,html,yml,yaml,scss,sass}\"",
     "lint-staged": "lint-staged"
   },
   "pre-commit": "lint-staged",
-  "lint-staged": {
-    "*.js": [
-      "yarn format",
-      "git add"
-    ]
-  },
   "devDependencies": {
     "eslint": "^6.1.0",
     "lint-staged": "^9.2.1",
-    "pre-commit": "^1.2.2"
+    "pre-commit": "^1.2.2",
+    "shell-quote": "^1.7.2"
   },
   "dependencies": {
     "fs-extra": "^8.1.0",

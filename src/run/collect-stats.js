@@ -76,7 +76,7 @@ module.exports = async function collectStats(
     child.kill()
   }
 
-  for (const fileGroup of runConfig.filesToTrack) {
+  await Promise.all(runConfig.filesToTrack.map(async fileGroup => {
     const { name, globs } = fileGroup
     const groupStats = {}
     const curFiles = new Set()
@@ -98,7 +98,7 @@ module.exports = async function collectStats(
       }
     }
     stats[name] = groupStats
-  }
+  }))
 
   return stats
 }

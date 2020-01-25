@@ -3,4 +3,4 @@ set -eu # stop on error
 
 export HOME=/root
 
-node /get-stats/
+node src/index.js
