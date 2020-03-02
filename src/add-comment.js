@@ -68,7 +68,6 @@ module.exports = async function addComment(
         // only show gzip values
         if (!isGzipItem && groupKey !== 'General') return
 
-
         if (itemKey !== 'buildDuration') {
           if (typeof mainItemVal === 'number') mainRepoTotal += mainItemVal
           if (typeof diffItemVal === 'number') diffRepoTotal += diffItemVal
@@ -184,7 +183,7 @@ module.exports = async function addComment(
       comment += `<hr/>\n`
     }
   }
-  logger('\n', comment)
+  logger('\n--stats start--\n', comment, '\n--stats end--\n')
 
   if (
     actionInfo.customCommentEndpoint ||
