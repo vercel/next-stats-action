@@ -52,7 +52,6 @@ module.exports = actionInfo => {
       }
     },
     async linkPackages(repoDir = '') {
-      await fs.remove(path.join(repoDir, 'node_modules'))
       const pkgPaths = new Map()
       const pkgDatas = new Map()
       let pkgs
@@ -69,22 +68,24 @@ module.exports = actionInfo => {
 
       for (const pkg of pkgs) {
         const pkgPath = path.join(repoDir, 'packages', pkg)
-        await fs.remove(path.join(pkgPath, 'node_modules'))
+        const packedPkgPath = path.join(pkgPath, `${pkg}-packed.tgz`)
+        // pack the package with yarn
+        await exec(`cd ${pkgPath} && yarn pack -f ${pkg}-packed.tgz`)
 
         const pkgDataPath = path.join(pkgPath, 'package.json')
         const pkgData = require(pkgDataPath)
         const { name } = pkgData
-        pkgDatas.set(name, { pkgDataPath, pkgData })
-        pkgPaths.set(name, pkgPath)
+        pkgDatas.set(name, { pkgDataPath, pkgData, packedPkgPath })
+        pkgPaths.set(name, packedPkgPath)
       }
 
       for (const pkg of pkgDatas.keys()) {
         const { pkgDataPath, pkgData } = pkgDatas.get(pkg)
 
         for (const pkg of pkgDatas.keys()) {
-          const { pkgDataPath } = pkgDatas.get(pkg)
+          const { packedPkgPath } = pkgDatas.get(pkg)
           if (!pkgData.dependencies || !pkgData.dependencies[pkg]) continue
-          pkgData.dependencies[pkg] = path.dirname(pkgDataPath)
+          pkgData.dependencies[pkg] = packedPkgPath
         }
         await fs.writeFile(
           pkgDataPath,

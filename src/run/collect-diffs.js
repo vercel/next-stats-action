@@ -69,16 +69,14 @@ module.exports = async function collectDiffs(
 
     diffs._renames = []
 
-    await Promise.all(
-      renamedFiles.map(async line => {
-        const [, prev, cur] = line.split('\t')
-        await fs.move(path.join(diffingDir, cur), path.join(diffingDir, prev))
-        diffs._renames.push({
-          prev,
-          cur,
-        })
+    for (const line of renamedFiles) {
+      const [, prev, cur] = line.split('\t')
+      await fs.move(path.join(diffingDir, cur), path.join(diffingDir, prev))
+      diffs._renames.push({
+        prev,
+        cur,
       })
-    )
+    }
 
     await exec(`cd ${diffingDir} && git add .`)
 
@@ -87,30 +85,28 @@ module.exports = async function collectDiffs(
     )
     changedFiles = changedFiles.trim().split('\n')
 
-    await Promise.all(
-      changedFiles.map(async file => {
-        const fileKey = path.basename(file)
-        const hasFile = await fs.exists(path.join(diffingDir, file))
+    for (const file of changedFiles) {
+      const fileKey = path.basename(file)
+      const hasFile = await fs.exists(path.join(diffingDir, file))
 
-        if (!hasFile) {
-          diffs[fileKey] = 'deleted'
-          return
-        }
+      if (!hasFile) {
+        diffs[fileKey] = 'deleted'
+        continue
+      }
 
-        try {
-          let { stdout } = await exec(
-            `cd ${diffingDir} && git diff --minimal HEAD ${file}`
-          )
-          stdout = (stdout.split(file).pop() || '').trim()
-          if (stdout.length > 0) {
-            diffs[fileKey] = stdout
-          }
-        } catch (err) {
-          console.error(`Failed to diff ${file}: ${err.message}`)
-          diffs[fileKey] = `failed to diff`
+      try {
+        let { stdout } = await exec(
+          `cd ${diffingDir} && git diff --minimal HEAD ${file}`
+        )
+        stdout = (stdout.split(file).pop() || '').trim()
+        if (stdout.length > 0) {
+          diffs[fileKey] = stdout
         }
-      })
-    )
+      } catch (err) {
+        console.error(`Failed to diff ${file}: ${err.message}`)
+        diffs[fileKey] = `failed to diff`
+      }
+    }
   }
   return diffs
 }

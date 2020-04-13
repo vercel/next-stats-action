@@ -65,8 +65,11 @@ module.exports = async function addComment(
         const diffItemStr = prettify(diffItemVal, prettyType)
         let change = '✓'
 
-        // only show gzip values
-        if (!isGzipItem && groupKey !== 'General') return
+        // Don't show gzip values for serverless as they aren't
+        // deterministic currently
+        if (groupKey.startsWith('Serverless') && isGzipItem) return
+        // otherwise only show gzip values
+        else if (!isGzipItem && !groupKey.match(/(General|^Serverless)/)) return
 
         if (itemKey !== 'buildDuration') {
           if (typeof mainItemVal === 'number') mainRepoTotal += mainItemVal

@@ -76,31 +76,29 @@ module.exports = async function collectStats(
     child.kill()
   }
 
-  await Promise.all(
-    runConfig.filesToTrack.map(async fileGroup => {
-      const { name, globs } = fileGroup
-      const groupStats = {}
-      const curFiles = new Set()
+  for (const fileGroup of runConfig.filesToTrack) {
+    const { name, globs } = fileGroup
+    const groupStats = {}
+    const curFiles = new Set()
 
-      for (const pattern of globs) {
-        const results = await glob(pattern, { cwd: curDir, nodir: true })
-        results.forEach(result => curFiles.add(result))
-      }
+    for (const pattern of globs) {
+      const results = await glob(pattern, { cwd: curDir, nodir: true })
+      results.forEach(result => curFiles.add(result))
+    }
 
-      for (const file of curFiles) {
-        const fileKey = path.basename(file)
-        const absPath = path.join(curDir, file)
-        try {
-          const fileInfo = await fs.stat(absPath)
-          groupStats[fileKey] = fileInfo.size
-          groupStats[`${fileKey} gzip`] = await gzipSize.file(absPath)
-        } catch (err) {
-          logger.error('Failed to get file stats', err)
-        }
+    for (const file of curFiles) {
+      const fileKey = path.basename(file)
+      const absPath = path.join(curDir, file)
+      try {
+        const fileInfo = await fs.stat(absPath)
+        groupStats[fileKey] = fileInfo.size
+        groupStats[`${fileKey} gzip`] = await gzipSize.file(absPath)
+      } catch (err) {
+        logger.error('Failed to get file stats', err)
       }
-      stats[name] = groupStats
-    })
-  )
+    }
+    stats[name] = groupStats
+  }
 
   const orderedStats = {}
 
