@@ -2,6 +2,9 @@ const fetch = require('node-fetch')
 const prettyMs = require('pretty-ms')
 const logger = require('./util/logger')
 const prettyBytes = require('pretty-bytes')
+const { benchTitle } = require('./constants')
+
+const gzipIgnoreRegex = new RegExp(`(General|^Serverless|${benchTitle})`)
 
 const prettify = (val, type = 'bytes') => {
   if (typeof val !== 'number') return 'N/A'
@@ -45,6 +48,7 @@ module.exports = async function addComment(
     let resultContent = ''
 
     Object.keys(result.mainRepoStats).forEach(groupKey => {
+      const isBenchmark = groupKey === benchTitle
       const mainRepoGroup = result.mainRepoStats[groupKey]
       const diffRepoGroup = result.diffRepoStats[groupKey]
       const itemKeys = new Set([
@@ -57,21 +61,31 @@ module.exports = async function addComment(
       let totalChange = 0
 
       itemKeys.forEach(itemKey => {
-        const prettyType = itemKey === 'buildDuration' ? 'ms' : 'bytes'
+        const prettyType = itemKey.match(/(length|duration)/i) ? 'ms' : 'bytes'
         const isGzipItem = itemKey.endsWith('gzip')
         const mainItemVal = mainRepoGroup[itemKey]
         const diffItemVal = diffRepoGroup[itemKey]
-        const mainItemStr = prettify(mainItemVal, prettyType)
-        const diffItemStr = prettify(diffItemVal, prettyType)
+        const useRawValue = isBenchmark && prettyType !== 'ms'
+        const mainItemStr = useRawValue
+          ? mainItemVal
+          : prettify(mainItemVal, prettyType)
+
+        const diffItemStr = useRawValue
+          ? diffItemVal
+          : prettify(diffItemVal, prettyType)
+
         let change = '✓'
 
         // Don't show gzip values for serverless as they aren't
         // deterministic currently
         if (groupKey.startsWith('Serverless') && isGzipItem) return
         // otherwise only show gzip values
-        else if (!isGzipItem && !groupKey.match(/(General|^Serverless)/)) return
+        else if (!isGzipItem && !groupKey.match(gzipIgnoreRegex)) return
 
-        if (itemKey !== 'buildDuration') {
+        if (
+          itemKey !== 'buildDuration' ||
+          (isBenchmark && itemKey.match(/req\/sec/))
+        ) {
           if (typeof mainItemVal === 'number') mainRepoTotal += mainItemVal
           if (typeof diffItemVal === 'number') diffRepoTotal += diffItemVal
         }
@@ -86,19 +100,19 @@ module.exports = async function addComment(
 
             // check if there is still a change after rounding
             if (change !== 0) {
-              change = `${change < 0 ? '-' : '⚠️ +'}${prettify(
-                Math.abs(change),
-                prettyType
-              )}`
+              const absChange = Math.abs(change)
+              change = `${change < 0 ? '-' : '⚠️ +'}${
+                useRawValue ? absChange : prettify(absChange, prettyType)
+              }`
             }
           } else {
             change = 'N/A'
           }
         }
 
-        groupTable += `| ${shortenLabel(
-          itemKey
-        )} | ${mainItemStr} | ${diffItemStr} | ${change} |\n`
+        groupTable += `| ${
+          isBenchmark ? itemKey : shortenLabel(itemKey)
+        } | ${mainItemStr} | ${diffItemStr} | ${change} |\n`
       })
       let groupTotalChange = ''
 
@@ -107,7 +121,7 @@ module.exports = async function addComment(
       if (totalChange !== 0) {
         if (totalChange < 0) {
           resultHasDecrease = true
-          groupTotalChange = ' Overall decrease ✓'
+          groupTotalChange = ` Overall decrease ${isBenchmark ? '⚠️' : '✓'}`
         } else {
           if (
             (groupKey !== 'General' && totalChange > 5) ||
@@ -115,11 +129,11 @@ module.exports = async function addComment(
           ) {
             resultHasIncrease = true
           }
-          groupTotalChange = ' Overall increase ⚠️'
+          groupTotalChange = ` Overall increase ${isBenchmark ? '✓' : '⚠️'}`
         }
       }
 
-      if (groupKey !== 'General') {
+      if (groupKey !== 'General' && groupKey !== benchTitle) {
         let totalChangeSign = ''
 
         if (totalChange === 0) {

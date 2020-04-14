@@ -1,5 +1,6 @@
 const path = require('path')
 
+const benchTitle = 'Page Load Tests'
 const workDir = path.join(__dirname, '../.work')
 const mainRepoName = 'main-repo'
 const diffRepoName = 'diff-repo'
@@ -15,6 +16,7 @@ const allowedConfigLocations = [
 ]
 
 module.exports = {
+  benchTitle,
   workDir,
   diffingDir,
   mainRepoName,

@@ -144,6 +144,11 @@ astral-regex@^1.0.0:
   resolved "https://registry.yarnpkg.com/astral-regex/-/astral-regex-1.0.0.tgz#6c8c3fb827dd43ee3918f27b82782ab7658a6fd9"
   integrity sha512-+Ryf6g3BKoRc7jfp7ad8tM4TtMiaWvbF/1/sQcZPkkS7ag3D5nMBCe2UfOTONtAkaG0tO0ij3C5Lwmf1EiyjHg==
 
+async-sema@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/async-sema/-/async-sema-3.1.0.tgz#3a813beb261e4cc58b19213916a48e931e21d21e"
+  integrity sha512-+JpRq3r0zjpRLDruS6q/nC4V5tzsaiu07521677Mdi5i+AkaU/aNJH38rYHJVQ4zvz+SSkjgc8FUI7qIZrR+3g==
+
 balanced-match@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/balanced-match/-/balanced-match-1.0.0.tgz#89b4d199ab2bee49de164ea02b89ce462d71b767"

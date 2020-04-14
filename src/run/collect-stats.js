@@ -7,36 +7,50 @@ const gzipSize = require('gzip-size')
 const logger = require('../util/logger')
 const { spawn } = require('../util/exec')
 const { parse: urlParse } = require('url')
-const { statsAppDir, diffingDir } = require('../constants')
+const benchmarkUrl = require('./benchmark-url')
+const { statsAppDir, diffingDir, benchTitle } = require('../constants')
 
 module.exports = async function collectStats(
   runConfig = {},
   statsConfig = {},
   fromDiff = false
 ) {
-  const stats = {}
+  const stats = {
+    [benchTitle]: {},
+  }
+  const orderedStats = {
+    [benchTitle]: {},
+  }
   const curDir = fromDiff ? diffingDir : statsAppDir
+
+  const hasPagesToFetch =
+    Array.isArray(runConfig.pagesToFetch) && runConfig.pagesToFetch.length > 0
+
+  const hasPagesToBench =
+    Array.isArray(runConfig.pagesToBench) && runConfig.pagesToBench.length > 0
 
   if (
     !fromDiff &&
     statsConfig.appStartCommand &&
-    Array.isArray(runConfig.pagesToFetch) &&
-    runConfig.pagesToFetch.length > 0
+    (hasPagesToFetch || hasPagesToBench)
   ) {
-    const fetchedPagesDir = path.join(curDir, 'fetched-pages')
     const port = await getPort()
     const child = spawn(statsConfig.appStartCommand, {
       cwd: curDir,
       env: {
         PORT: port,
       },
+      stdio: 'pipe',
     })
     let exitCode = null
+    let logStderr = true
+    child.stdout.on('data', data => process.stdout.write(data))
+    child.stderr.on('data', data => logStderr && process.stderr.write(data))
 
     child.on('exit', code => {
       exitCode = code
     })
-    // give server a second to start up
+    // give app a second to start up
     await new Promise(resolve => setTimeout(() => resolve(), 1500))
 
     if (exitCode !== null) {
@@ -45,32 +59,55 @@ module.exports = async function collectStats(
       )
     }
 
-    await fs.mkdirp(fetchedPagesDir)
+    if (hasPagesToFetch) {
+      const fetchedPagesDir = path.join(curDir, 'fetched-pages')
+      await fs.mkdirp(fetchedPagesDir)
 
-    for (let url of runConfig.pagesToFetch) {
-      url = url.replace('$PORT', port)
-      const { pathname } = urlParse(url)
-      try {
-        const res = await fetch(url)
-        if (!res.ok) {
-          throw new Error(`Failed to fetch ${url} got status: ${res.status}`)
+      for (let url of runConfig.pagesToFetch) {
+        url = url.replace('$PORT', port)
+        const { pathname } = urlParse(url)
+        try {
+          const res = await fetch(url)
+          if (!res.ok) {
+            throw new Error(`Failed to fetch ${url} got status: ${res.status}`)
+          }
+          const responseText = (await res.text()).trim()
+
+          let fileName = pathname === '/' ? '/index' : pathname
+          if (fileName.endsWith('/'))
+            fileName = fileName.substr(0, fileName.length - 1)
+          logger(
+            `Writing file to ${path.join(fetchedPagesDir, `${fileName}.html`)}`
+          )
+
+          await fs.writeFile(
+            path.join(fetchedPagesDir, `${fileName}.html`),
+            responseText,
+            'utf8'
+          )
+        } catch (err) {
+          logger.error(err)
         }
-        const responseText = (await res.text()).trim()
+      }
+    }
 
-        let fileName = pathname === '/' ? '/index' : pathname
-        if (fileName.endsWith('/'))
-          fileName = fileName.substr(0, fileName.length - 1)
-        logger(
-          `Writing file to ${path.join(fetchedPagesDir, `${fileName}.html`)}`
-        )
+    if (hasPagesToBench) {
+      // disable stderr so we don't clobber logs while benchmarking
+      // any pages that create logs
+      logStderr = false
 
-        await fs.writeFile(
-          path.join(fetchedPagesDir, `${fileName}.html`),
-          responseText,
-          'utf8'
-        )
-      } catch (err) {
-        logger.error(err)
+      for (let url of runConfig.pagesToBench) {
+        url = url.replace('$PORT', port)
+        logger(`Benchmarking ${url}`)
+
+        const results = await benchmarkUrl(url, runConfig.benchOptions)
+        logger(`Finished benchmarking ${url}`)
+
+        const { pathname: key } = urlParse(url)
+        stats[benchTitle][`${key} failed reqs`] = results.failedRequests
+        stats[benchTitle][`${key} total time (seconds)`] = results.totalTime
+
+        stats[benchTitle][`${key} avg req/sec`] = results.avgReqPerSec
       }
     }
     child.kill()
@@ -100,12 +137,13 @@ module.exports = async function collectStats(
     stats[name] = groupStats
   }
 
-  const orderedStats = {}
-
   for (const fileGroup of runConfig.filesToTrack) {
     const { name } = fileGroup
     orderedStats[name] = stats[name]
   }
 
+  if (stats[benchTitle]) {
+    orderedStats[benchTitle] = stats[benchTitle]
+  }
   return orderedStats
 }
